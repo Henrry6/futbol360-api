@@ -1,13 +1,10 @@
-import "fastify";
-import "@fastify/jwt";
-
 import { FastifyReply, FastifyRequest } from "fastify";
 
 export interface JwtUser {
-  id: string;
+  user: Types.ObjectId;
   username: string;
   role: string;
-  company?: string;
+  league: Types.ObjectId;
 }
 
 declare module "fastify" {
@@ -16,6 +13,6 @@ declare module "fastify" {
   }
 
   interface FastifyRequest {
-    user: JwtUser;
+    payload: JwtUser;
   }
 }

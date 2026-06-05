@@ -1,7 +1,9 @@
 import Users from "./users.service";
+import UpRouter from "@/libs/UpRouter";
 import { FastifyInstance } from "fastify";
-import { createCrudRoutes } from "@/utils/UpRouter";
 
 export async function userRoutes(app: FastifyInstance) {
-  createCrudRoutes(app, Users);
+  app.register(async (app) => {
+    app.register(UpRouter, { Model: Users });
+  });
 }

@@ -1,4 +1,4 @@
-import { Schema } from "mongoose";
+import { Schema, Types } from "mongoose";
 
 export enum UserRole {
   MASTER = "master",
@@ -7,6 +7,7 @@ export enum UserRole {
   PLAYER = "player",
 }
 export interface User {
+  _id: Types.ObjectId;
   name: string;
   username: string;
   email: string;

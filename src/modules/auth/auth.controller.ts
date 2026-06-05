@@ -1,6 +1,6 @@
 import { FastifyRequest } from "fastify";
+import { comparePassword } from "@/libs/utils";
 import Users from "@/modules/users/users.service";
-import { comparePassword } from "@/utils/hash";
 
 export async function loginController(
   request: FastifyRequest<{
