@@ -1,6 +1,7 @@
 import { FastifyInstance } from "fastify";
 import { authRoutes } from "../modules/auth/auth.routes";
 import { userRoutes } from "../modules/users/users.routes";
+import { leagueRoutes } from "../modules/leagues/leagues.routes";
 
 export async function registerRoutes(app: FastifyInstance) {
   await app.register(authRoutes, {
@@ -14,9 +15,9 @@ export async function registerRoutes(app: FastifyInstance) {
       prefix: "/users",
     });
 
-    // await protectedApp.register(leagueRoutes, {
-    //   prefix: "/leagues",
-    // });
+    await protectedApp.register(leagueRoutes, {
+      prefix: "/leagues",
+    });
 
     // await protectedApp.register(dashboardRoutes, {
     //   prefix: "/dashboard",

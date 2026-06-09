@@ -16,7 +16,7 @@ export async function buildApp() {
   await app.register(jwtPlugin);
   await registerRoutes(app);
 
-  app.get("/health", async () => {
+  app.get("/", async () => {
     return {
       success: true,
       message: "Futbol360 API",

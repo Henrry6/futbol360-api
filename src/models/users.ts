@@ -1,4 +1,5 @@
-import { Schema, Types } from "mongoose";
+import { Collections } from "@/libs/useful";
+import { Collection, Schema, Types } from "mongoose";
 
 export enum UserRole {
   MASTER = "master",
@@ -27,7 +28,7 @@ const UserSchema = new Schema<User>(
     leagues: [
       {
         type: Schema.Types.ObjectId,
-        ref: "leagues",
+        ref: Collections.USERS,
       },
     ],
     active: { type: Boolean, default: true },

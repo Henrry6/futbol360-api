@@ -1,4 +1,4 @@
-import { hashPassword } from "./utils/hash";
+import { hashPassword } from "@/libs/utils";
 import Users from "./modules/users/users.service";
 
 export async function seedMaster() {

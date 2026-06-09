@@ -77,7 +77,7 @@ export function prepareRequest(
 }
 
 interface RouterOptions {
-  Model: MongooseModel<any> & {
+  Model: any & {
     createDocument?: (
       body: any,
       args?: {
@@ -121,7 +121,6 @@ interface RouterOptions {
     | "putOne"
     | "delOne"
     | "getOptions"
-    | "generarAsientoContable"
   )[];
 
   /**
@@ -222,7 +221,7 @@ export default async function UpRouter(
             let documento: any;
             if (options.crearConSesion) {
               session = await options.Model.startSession();
-              await session.withTransaction(async () => {
+              await session?.withTransaction(async () => {
                 if (options.Model.createDocument) {
                   documento = await options.Model.createDocument(request.body, {
                     session,
