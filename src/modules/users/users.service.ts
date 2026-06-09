@@ -1,11 +1,25 @@
 import { model } from "mongoose";
-import userSchema, { User } from "../../models/users";
+import UserSchema, { User } from "../../models/users";
 import mongooseSmartQuery from "mongoose-smart-query";
-import { msqTemporalOptions } from "@/libs/utils";
+import Liga from "@/modules/leagues/leagues.service";
+import { FastifyError, msqTemporalOptions } from "@/libs/utils";
 
-userSchema.plugin(mongooseSmartQuery, {
-  fieldsForDefaultQuery: "name username password role leagues",
+UserSchema.plugin(mongooseSmartQuery, {
+  defaultFields: "name username role leagues",
+  fieldsForDefaultQuery: "name username",
   ...msqTemporalOptions,
 });
 
-export default model<User>("users", userSchema);
+UserSchema.statics.createDocument = async function (body, args = {}) {
+  const usuario = new this(body);
+  const liga = await Liga.findById(args.league);
+  if (liga) {
+    usuario?.leagues.push(liga._id);
+    await usuario?.save();
+  } else {
+    throw new FastifyError("El usuario no se puede asociar a una liga");
+  }
+  return usuario;
+};
+
+export default model<User>("users", UserSchema);

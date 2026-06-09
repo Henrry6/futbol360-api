@@ -1,16 +1,14 @@
+import Debug from "debug";
+import { ClientSession, HydratedDocument, Types } from "mongoose";
 import { deepmerge, FastifyError, getMovimiento, Movement } from "@/libs/utils";
-import {
-  ClientSession,
-  HydratedDocument,
-  Model as MongooseModel,
-  Types,
-} from "mongoose";
 import {
   FastifyInstance,
   FastifyRequest,
   FastifySchema,
   RouteHandlerMethod,
 } from "fastify";
+
+const debug = Debug("src:libs:UpRouter");
 
 export type UpRequest = {
   Querystring: {
@@ -46,7 +44,7 @@ export function prepareRequest(
   request: FastifyRequest<UpRequest>,
   filter?: { league?: Types.ObjectId; [key: string]: any },
 ) {
-  const payload = request.payload;
+  const payload = request?.payload;
   if (["GET"].includes(request.method)) {
     if (payload?.league) {
       request.query.league = payload.league.toString();
@@ -59,19 +57,19 @@ export function prepareRequest(
       throw new FastifyError("No se proporcionó los datos", 400);
     } else {
       delete request.body.__v;
-      if (request.payload?.league) {
-        request.body.league = request.payload.league;
-      }
-      request.body.updatedBy = new Types.ObjectId(request.payload.user);
+      // if (request.payload?.league) {
+      //   request.body.league = request.payload.league;
+      // }
+      request.body.updatedBy = new Types.ObjectId(payload.user);
       if (request.method.includes("POST")) {
-        request.body.createdBy = request.payload.user;
-        request.body.updatedBy = request.payload.user;
+        request.body.createdBy = payload.user;
+        request.body.updatedBy = payload.user;
       } else if (request.method.includes("PUT")) {
-        request.body.updatedBy = request.payload.user;
+        request.body.updatedBy = payload.user;
       }
     }
   }
-  if (filter && request.payload?.league) filter.league = request.payload.league;
+  // if (filter && payload?.league) filter.league = payload.league;
 
   return request;
 }
@@ -268,6 +266,7 @@ export default async function UpRouter(
         (async (request, reply) => {
           const filter = { _id: request.params.id };
           prepareRequest(request, filter);
+          debug("Editando documento", filter);
           if (options.pre?.put) await options.pre.put(request);
           let documento: HydratedDocument<any>;
 
@@ -309,6 +308,7 @@ export default async function UpRouter(
                 await documento.save();
               }
             } else {
+              console.log(filter, "filter xxx ");
               documento = await options.Model.findOne(filter);
               if (!documento)
                 throw new FastifyError(

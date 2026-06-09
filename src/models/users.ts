@@ -1,5 +1,6 @@
 import { Collections } from "@/libs/useful";
-import { Collection, Schema, Types } from "mongoose";
+import { Movement } from "@/libs/utils";
+import { Schema, Types, Document, SchemaTypes } from "mongoose";
 
 export enum UserRole {
   MASTER = "master",
@@ -14,11 +15,14 @@ export interface User {
   email: string;
   password: string;
   role: "master" | "admin" | "directivo" | "player";
-  leagues: Schema.Types.ObjectId[];
+  leagues: Types.ObjectId[];
   status: "activo" | "inactivo";
+  _movements: Movement[];
 }
 
-const UserSchema = new Schema<User>(
+export type UserDocument = User & Document;
+
+const UserSchema = new Schema<UserDocument>(
   {
     name: { type: String, required: true },
     username: { type: String, required: true, unique: true },
@@ -27,11 +31,12 @@ const UserSchema = new Schema<User>(
     role: { type: String, enum: Object.values(UserRole), required: true },
     leagues: [
       {
-        type: Schema.Types.ObjectId,
+        type: SchemaTypes.ObjectId,
         ref: Collections.USERS,
       },
     ],
     status: { type: String, default: "activo" },
+    _movements: { type: [Movement] },
   },
   {
     timestamps: true,

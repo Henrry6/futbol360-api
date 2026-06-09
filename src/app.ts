@@ -1,3 +1,4 @@
+import Debug from "debug";
 import Fastify from "fastify";
 import jwtPlugin from "./plugins/jwt";
 import authPlugin from "./plugins/auth";
@@ -7,9 +8,11 @@ import { registerSwagger } from "./plugins/swagger";
 
 export async function buildApp() {
   const app = Fastify({
-    logger: true,
+    logger: {
+      level: "warn",
+    },
   });
-
+  Debug.enable("src:*");
   await registerCors(app);
   await registerSwagger(app);
   await app.register(authPlugin);

@@ -1,11 +1,11 @@
 import { buildApp } from "./app";
 import { env } from "./config/env";
-import { seedMaster } from "./seed";
+// import { seedMaster } from "./seed";
 import { connectDatabase } from "./config/database";
 
 async function bootstrap() {
   await connectDatabase();
-  await seedMaster();
+  // await seedMaster();
   const app = await buildApp();
 
   await app.listen({

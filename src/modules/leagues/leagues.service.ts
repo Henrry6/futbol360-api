@@ -1,11 +1,40 @@
-import { model } from "mongoose";
-import LeagueSchema, { League } from "../../models/leagues";
+import { model, Types } from "mongoose";
+import Users from "../users/users.service";
+import mongooseSmartQuery from "mongoose-smart-query";
+import LeagueSchema, {
+  League,
+  LeagueDocument,
+  LigaModel,
+} from "../../models/leagues";
+import {
+  FastifyError,
+  getMovimiento,
+  Movement,
+  msqTemporalOptions,
+} from "@/libs/utils";
 
-LeagueSchema.post("save", async function () {
-  console.log(this, "DATA LEAGUE 11111");
-  if (this.isNew) {
-    console.log(this, "DATA LEAGUE 2222");
-  }
+LeagueSchema.plugin(mongooseSmartQuery, {
+  defaultFields: "name code status description",
+  fieldsForDefaultQuery: "name code",
+  ...msqTemporalOptions,
 });
 
-export default model<League>("leagues", LeagueSchema);
+LeagueSchema.statics.createDocument = async function (body, args = {}) {
+  const creador = await getMovimiento({
+    type: "created",
+    user: args.user,
+  });
+  const liga = new this(body);
+  liga._movements = [creador];
+  const usuario = await Users.findById(args.user);
+  if (usuario) {
+    usuario?.leagues.push(liga._id);
+    usuario?.save();
+  } else {
+    throw new FastifyError("La liga no puede ser asignada a un usuario");
+  }
+  await liga.save();
+  return liga;
+} as LigaModel["createDocument"];
+
+export default model<League, LigaModel>("leagues", LeagueSchema);

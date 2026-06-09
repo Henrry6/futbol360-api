@@ -1,35 +1,51 @@
-import { comparePassword } from "@/libs/utils";
+import Debug from "debug";
 import Users from "@/modules/users/users.service";
 import { FastifyReply, FastifyRequest } from "fastify";
 import Leagues from "@/modules/leagues/leagues.service";
+import { comparePassword, FastifyError } from "@/libs/utils";
+
+const debug = Debug("src:modules:auth");
 
 export async function loginController(
-  request: FastifyRequest<{
+  req: FastifyRequest<{
     Body: {
+      code: string;
       username: string;
       password: string;
     };
   }>,
   reply: FastifyReply,
 ) {
+  debug("Verificación de login");
   const user = await Users.findOne({
-    username: request.body.username,
+    username: req.body.username,
   }).select("+password");
 
-  if (!user) {
-    throw new Error("Usuario o contraseña incorrectos");
+  const liga = await Leagues.findOne({ code: req.body.code }, "name code");
+  if (!liga) {
+    throw new FastifyError(`Liga ${req.body.code} no fue encontrada`, 404);
   }
-  const isValid = await comparePassword(request.body.password, user.password);
+  if (!user) {
+    throw new FastifyError(
+      `Usuario ${req.body.username} no fue encontrado`,
+      404,
+    );
+  }
+  const isValid = await comparePassword(req.body.password, user.password);
   if (!isValid) {
     throw new Error("Usuario o contraseña incorrectos");
   }
-
-  const token = await request.server.jwt.sign({
-    user: user._id,
-    league: user._id,
-    username: user.username,
-    role: user.role,
-  });
+  const token = await req.server.jwt.sign(
+    {
+      user: user._id,
+      league: liga._id,
+      username: user.username,
+      role: user.role,
+    },
+    {
+      expiresIn: "7d",
+    },
+  );
 
   reply.send({
     token,
@@ -46,15 +62,21 @@ export async function loginController(
 
 export const authUser = {
   get: async (request: FastifyRequest, reply: FastifyReply) => {
-    console.log(request.payload, "REQQQQ");
-    const business = request.payload.league;
+    debug("Obteniendo usuario logueado");
+    const leagues = request.payload.league;
     const [user, liga] = await Promise.all([
       Users.findOne(
-        { business, _id: request.payload.user },
+        { leagues, _id: request.payload.user },
         "name role leagues",
       ),
-      Leagues.findOne({ _id: business }, "name code logo status"),
+      Leagues.findOne({ _id: leagues }, "name code logo status"),
     ]);
+    if (!user) {
+      return reply.status(404).send({ message: "Usuario no encontrado" });
+    }
+    if (!liga) {
+      return reply.status(404).send({ message: "Liga no encontrada" });
+    }
     reply.send({
       code: liga?.code,
       liga: liga?.name,

@@ -30,10 +30,7 @@ export async function getUsersInfo(
   idsUsuarios: Types.ObjectId[],
 ): Promise<Pick<User, "_id" | "name" | "username">[]> {
   const users = await model<User>(Collections.USERS)
-    .find(
-      { _id: { $in: idsUsuarios } },
-      { name: 1, username: 1, firmaCargada: 1 },
-    )
+    .find({ _id: { $in: idsUsuarios } }, { name: 1, username: 1 })
     .lean();
   return users;
 }
@@ -54,11 +51,9 @@ export type TiposMovimiento =
 export const getMovimiento = async (args: {
   user?: Types.ObjectId;
   type: TiposMovimiento;
-  business?: Types.ObjectId;
   nota?: string;
   infoAdicional?: string;
-  esEmpleado?: boolean;
-}) => {
+}): Promise<Movement> => {
   // debug('agregando información de movimiento %o', args)
   const [user] = args.user ? await getUsersInfo([args.user]) : [];
   let nota = args.nota || "";
@@ -92,6 +87,26 @@ export const getMovimiento = async (args: {
   nota += args?.infoAdicional || "";
   return { type: args.type, user: args.user, nota };
 };
+
+export function uniqueDocValidator(
+  fields: string | string[],
+  message?: string,
+) {
+  const paths = typeof fields === "string" ? [fields] : fields;
+  return {
+    async validator(this: any) {
+      const query: Record<string, unknown> = { _id: { $ne: this._id } };
+      paths.forEach((field) => {
+        const value = this.get(field, undefined, { getters: false });
+        if (value === undefined) return;
+        query[field] = value;
+      });
+      return (await this.constructor.countDocuments(query)) === 0;
+    },
+    message: ({ value }: any) =>
+      message || `Ya existe un documento con identificador: ${value}.`,
+  };
+}
 
 export interface Movement {
   type: TiposMovimiento;
