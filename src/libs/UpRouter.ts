@@ -173,6 +173,7 @@ export default async function UpRouter(
       options.controllers?.get ||
         (async (request, reply) => {
           prepareRequest(request);
+          console.log(request.query);
           if (options.pre?.get) await options.pre.get(request);
           const [data, total] = await Promise.all([
             options.Model.smartQuery(request.query),

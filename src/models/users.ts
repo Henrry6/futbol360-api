@@ -15,7 +15,7 @@ export interface User {
   password: string;
   role: "master" | "admin" | "directivo" | "player";
   leagues: Schema.Types.ObjectId[];
-  active: boolean;
+  status: "activo" | "inactivo";
 }
 
 const UserSchema = new Schema<User>(
@@ -31,7 +31,7 @@ const UserSchema = new Schema<User>(
         ref: Collections.USERS,
       },
     ],
-    active: { type: Boolean, default: true },
+    status: { type: String, default: "activo" },
   },
   {
     timestamps: true,

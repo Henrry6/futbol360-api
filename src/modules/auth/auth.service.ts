@@ -1,5 +1,5 @@
 import Users from "@/modules/users/users.service";
-import { comparePassword } from "../../utils/hash";
+// import { comparePassword } from "../../utils";
 
 export async function login(username: string, password: string) {
   const user = await Users.findOne({
@@ -10,10 +10,10 @@ export async function login(username: string, password: string) {
   if (!user) {
     throw new Error("Usuario o contraseña incorrectos");
   }
-  const isValid = await comparePassword(password, user.password);
-  if (!isValid) {
-    throw new Error("Usuario o contraseña incorrectos");
-  }
+  // const isValid = await comparePassword(password, user.password);
+  // if (!isValid) {
+  //   throw new Error("Usuario o contraseña incorrectos");
+  // }
 
   return user;
 }

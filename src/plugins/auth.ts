@@ -1,7 +1,9 @@
 import fp from "fastify-plugin";
+import { JwtUser } from "@/types/fastify";
 
 export default fp(async (app) => {
   app.decorate("authenticate", async function (request, reply) {
-    await request.jwtVerify();
+    const payload = await request.jwtVerify();
+    request.payload = payload as JwtUser;
   });
 });

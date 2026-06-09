@@ -111,3 +111,11 @@ export const Movement = new Schema<Movement>(
   },
   { _id: false },
 );
+
+export const msqTemporalOptions = {
+  pageQueryName: "page",
+  limitQueryName: "limit",
+  fieldsQueryName: "fields",
+  sortQueryName: "sort",
+  queryName: "q",
+};
