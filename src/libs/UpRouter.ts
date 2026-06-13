@@ -171,7 +171,6 @@ export default async function UpRouter(
       options.controllers?.get ||
         (async (request, reply) => {
           prepareRequest(request);
-          console.log(request.query);
           if (options.pre?.get) await options.pre.get(request);
           const [data, total] = await Promise.all([
             options.Model.smartQuery(request.query),
@@ -339,36 +338,53 @@ export default async function UpRouter(
       "/:id",
       options.controllers?.delOne ||
         (async (request, reply) => {
-          const session = await options.Model.startSession();
-          try {
-            await session.withTransaction(async () => {
-              const filter: Record<string, Types.ObjectId> = {
-                _id: new Types.ObjectId(request.params.id),
-              };
-              prepareRequest(request, filter);
-              if (options.Model.deleteDocument) {
-                await options.Model.deleteDocument(filter, {
-                  session,
-                  user: request.payload.user,
-                  league: request.payload.league,
-                });
-              } else {
-                const documento =
-                  await options.Model.findOne(filter).session(session);
-                if (!documento)
-                  throw new FastifyError(
-                    "No se encontró el documento a eliminar",
-                    404,
-                  );
-                await documento.deleteOne({ session });
-              }
-              reply.send("success");
-            });
-            await session.endSession();
-          } catch (err) {
-            await session.endSession();
-            throw err;
+          const filter: Record<string, Types.ObjectId> = {
+            _id: new Types.ObjectId(request.params.id),
+          };
+          prepareRequest(request, filter);
+
+          if (options.crearConSesion) {
+            const session = await options.Model.startSession();
+            try {
+              await session.withTransaction(async () => {
+                if (options.Model.deleteDocument) {
+                  await options.Model.deleteDocument(filter, {
+                    session,
+                    user: request.payload.user,
+                    league: request.payload.league,
+                  });
+                } else {
+                  const documento =
+                    await options.Model.findOne(filter).session(session);
+                  if (!documento)
+                    throw new FastifyError(
+                      "No se encontró el documento a eliminar",
+                      404,
+                    );
+                  await documento.deleteOne({ session });
+                }
+              });
+            } finally {
+              await session.endSession();
+            }
+          } else {
+            if (options.Model.deleteDocument) {
+              await options.Model.deleteDocument(filter, {
+                user: request.payload.user,
+                league: request.payload.league,
+              });
+            } else {
+              const documento = await options.Model.findOne(filter);
+              if (!documento)
+                throw new FastifyError(
+                  "No se encontró el documento a eliminar",
+                  404,
+                );
+              await documento.deleteOne();
+            }
           }
+
+          reply.send("success");
         }),
     );
   }

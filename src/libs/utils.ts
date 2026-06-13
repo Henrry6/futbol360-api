@@ -1,6 +1,7 @@
 import bcrypt from "bcryptjs";
 import { User } from "@/models/users";
 import { Collections } from "./useful";
+import { getMailer } from "@/plugins/mailer-instance";
 import { model, Schema, SchemaTypes, Types } from "mongoose";
 import { deepmergeCustom, DeepMergeLeafURI } from "deepmerge-ts";
 
@@ -134,3 +135,12 @@ export const msqTemporalOptions = {
   sortQueryName: "sort",
   queryName: "q",
 };
+
+export async function sendMail(options: {
+  to: string | string[];
+  subject: string;
+  html?: string;
+  text?: string;
+}) {
+  await getMailer().send(options);
+}

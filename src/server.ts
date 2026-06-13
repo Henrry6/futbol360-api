@@ -13,7 +13,7 @@ async function bootstrap() {
     host: "0.0.0.0",
   });
 
-  console.log(`Servidor iniciado en puerto ${env.port}`);
+  console.log(`Servidor iniciado en puerto http://localhost:${env.port}`);
 }
 
 bootstrap();

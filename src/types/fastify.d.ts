@@ -3,8 +3,8 @@ import { FastifyReply, FastifyRequest } from "fastify";
 export interface JwtUser {
   user: Types.ObjectId;
   username: string;
-  role: string;
-  league: Types.ObjectId;
+  role?: string;
+  league?: Types.ObjectId;
 }
 
 declare module "fastify" {

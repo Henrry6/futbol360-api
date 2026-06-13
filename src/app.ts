@@ -3,13 +3,14 @@ import Fastify from "fastify";
 import jwtPlugin from "./plugins/jwt";
 import authPlugin from "./plugins/auth";
 import { registerRoutes } from "./routes";
+import mailerPlugin from "./plugins/emails";
 import { registerCors } from "./plugins/cors";
 import { registerSwagger } from "./plugins/swagger";
 
 export async function buildApp() {
   const app = Fastify({
     logger: {
-      level: "warn",
+      level: "error",
     },
   });
   Debug.enable("src:*");
@@ -17,6 +18,38 @@ export async function buildApp() {
   await registerSwagger(app);
   await app.register(authPlugin);
   await app.register(jwtPlugin);
+  await app.register(mailerPlugin);
+  app.setErrorHandler((error: any, request, reply) => {
+    const statusCode = error.statusCode ?? 500;
+    const ignoredRoutes = ["/xxx", "/transactional-annex"];
+    const shouldIgnore = ignoredRoutes.some((route) =>
+      request.url.includes(route),
+    );
+    if (!shouldIgnore) {
+      console.error(
+        [
+          "",
+          "═══════════════════════════════════════",
+          `📅 Fecha: ${new Date().toLocaleString()}`,
+          `🌐 Endpoint: ${request.method} ${request.url}`,
+          `❌ Error: ${error.name}`,
+          `💬 Mensaje: ${error.message}`,
+          `📦 Body: ${JSON.stringify(request.body, null, 2)}`,
+          `📋 Params: ${JSON.stringify(request.params, null, 2)}`,
+          `🔍 Query: ${JSON.stringify(request.query, null, 2)}`,
+          `📚 Stack:`,
+          error.stack,
+          "═══════════════════════════════════════",
+        ].join("\n"),
+      );
+    }
+
+    return reply.status(statusCode).send({
+      success: false,
+      message: error.message,
+      code: error.name,
+    });
+  });
   await registerRoutes(app);
 
   app.get("/", async () => {
