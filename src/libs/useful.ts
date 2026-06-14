@@ -1,8 +1,8 @@
 export enum Collections {
-  CATEGORY = "categories",
+  CATEGORYS = "categories",
   CHAMPIONSHIP = "championship",
   LEAGUES = "leagues",
   PLAYERS = "players",
-  TEAM = "teams",
+  TEAMS = "teams",
   USERS = "users",
 }

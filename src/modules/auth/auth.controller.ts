@@ -26,6 +26,18 @@ export const authUser = {
         404,
       );
     }
+    if (user.status === "inactivo") {
+      throw new FastifyError(
+        `El usuario ${req.body.username} se encuentra inactivo`,
+        404,
+      );
+    }
+    if (user.role !== "master") {
+      throw new FastifyError(
+        `El usuario ${req.body.username} no es administrador`,
+        404,
+      );
+    }
     const isValid = await comparePassword(req.body.password, user.password);
     if (!isValid) {
       throw new Error("Usuario o contraseña incorrectos");
@@ -61,17 +73,30 @@ export const authUser = {
     reply: FastifyReply,
   ) => {
     debug("Verificación de login");
-    const user = await Users.findOne({
-      username: req.body.username,
-    }).select("+password");
 
     const liga = await Leagues.findOne({ code: req.body.code }, "name code");
     if (!liga) {
       throw new FastifyError(`Liga ${req.body.code} no fue encontrada`, 404);
     }
+    const user = await Users.findOne({
+      username: req.body.username,
+    }).select("+password");
+
     if (!user) {
       throw new FastifyError(
         `Usuario ${req.body.username} no fue encontrado`,
+        404,
+      );
+    }
+    if (!user.leagues.includes(liga._id) && user.role !== "master") {
+      throw new FastifyError(
+        `El usuario ${req.body.username} no tiene acceso a la liga.`,
+        404,
+      );
+    }
+    if (user.status === "inactivo") {
+      throw new FastifyError(
+        `El usuario ${req.body.username} se encuentra inactivo`,
         404,
       );
     }
@@ -96,9 +121,10 @@ export const authUser = {
       user: {
         id: user._id,
         name: user.name,
-        username: user.username,
         role: user.role,
-        leagues: user.leagues,
+        league: liga._id,
+        nameLiga: liga.name,
+        code: liga.code,
       },
     });
   },

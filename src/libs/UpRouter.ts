@@ -57,10 +57,10 @@ export function prepareRequest(
       throw new FastifyError("No se proporcionó los datos", 400);
     } else {
       delete request.body.__v;
-      // if (request.payload?.league) {
-      //   request.body.league = request.payload.league;
-      // }
-      request.body.updatedBy = new Types.ObjectId(payload.user);
+      if (request.payload?.league) {
+        request.body.league = request.payload.league;
+      }
+      request.body.updatedBy = payload.user;
       if (request.method.includes("POST")) {
         request.body.createdBy = payload.user;
         request.body.updatedBy = payload.user;
@@ -69,7 +69,7 @@ export function prepareRequest(
       }
     }
   }
-  // if (filter && payload?.league) filter.league = payload.league;
+  if (filter && payload?.league) filter.league = payload.league;
 
   return request;
 }
@@ -307,7 +307,6 @@ export default async function UpRouter(
                 await documento.save();
               }
             } else {
-              console.log(filter, "filter xxx ");
               documento = await options.Model.findOne(filter);
               if (!documento)
                 throw new FastifyError(

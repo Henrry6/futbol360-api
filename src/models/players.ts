@@ -1,9 +1,11 @@
+import { Movement } from "@/libs/utils";
 import { Collections } from "@/libs/useful";
 import { Schema, SchemaTypes, Types } from "mongoose";
 
 export interface Player {
   _id: Types.ObjectId;
   team: Types.ObjectId;
+  league: Types.ObjectId;
   identification: string;
   names: string;
   lastName: string;
@@ -12,12 +14,18 @@ export interface Player {
   photo?: string;
   position?: string;
   status: "activo" | "inactivo";
+  _movements: Movement[];
 }
 
 const Player = new Schema<Player>({
-  team: {
+  league: {
     type: SchemaTypes.ObjectId,
     ref: Collections.LEAGUES,
+    required: true,
+  },
+  team: {
+    type: SchemaTypes.ObjectId,
+    ref: Collections.TEAMS,
     required: true,
   },
   identification: { type: String, required: true },
@@ -28,6 +36,7 @@ const Player = new Schema<Player>({
   photo: String,
   position: String,
   status: { type: String, default: "activo" },
+  _movements: { type: [Movement] },
 });
 
 export default Player;
