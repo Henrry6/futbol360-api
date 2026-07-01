@@ -6,9 +6,9 @@ export interface ChampionshipTeam {
   team: Types.ObjectId;
   status: "activo" | "retirado" | "expulsado";
   // Fecha en la que union al campeonato
-  joinedAt: Date;
+  fechaIngreso: Date;
   // Fecha de salida
-  leftAt?: Date;
+  fechaSalida?: Date;
   // Posición final
   finalPosition?: number;
   // Puntos obtenidos
@@ -28,11 +28,11 @@ const ChampionshipTeamSchema = new Schema<ChampionshipTeam>(
       enum: ["activo", "retirado", "expulsado"],
       default: "activo",
     },
-    joinedAt: {
+    fechaIngreso: {
       type: Date,
       default: Date.now,
     },
-    leftAt: Date,
+    fechaSalida: Date,
     finalPosition: Number,
     points: Number,
     notes: String,
@@ -48,7 +48,7 @@ export interface Championship {
   name: string;
   category: Types.ObjectId;
   // Año deportivo
-  season: string;
+  season: Date;
   // Apertura, Clausura, Temporada, Copa, etc.
   type: "temporada" | "apertura" | "clausura" | "copa" | "amistoso";
   startDate: Date;
@@ -78,7 +78,7 @@ const ChampionshipSchema = new Schema<Championship>({
     required: true,
   },
   name: { type: String, required: true, trim: true },
-  season: { type: String, required: true },
+  season: { type: Date, required: true },
   type: {
     type: String,
     enum: ["temporada", "apertura", "clausura", "copa", "amistoso"],

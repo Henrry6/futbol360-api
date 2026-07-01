@@ -7,13 +7,13 @@ export interface Team {
   league: Types.ObjectId;
   name: string;
   representative: string;
-  fundacion?: number;
+  fundacion: Date;
   logo?: string;
   phone?: string;
   directorio?: {
     presidente: string;
     vicepresidente: string;
-    secretarios: string;
+    secretario: string;
     tesorero: string;
   };
   status: "activo" | "inactivo";
@@ -28,7 +28,13 @@ const Team = new Schema<Team>({
   },
   name: { type: String, required: true },
   representative: { type: String, required: true },
-  fundacion: { type: Number },
+  directorio: {
+    presidente: String,
+    vicepresidente: String,
+    secretario: String,
+    tesorero: String,
+  },
+  fundacion: { type: Date },
   logo: { type: String },
   phone: { type: String },
   status: { type: String, default: "activo" },

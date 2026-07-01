@@ -6,13 +6,22 @@ export interface Player {
   _id: Types.ObjectId;
   team: Types.ObjectId;
   league: Types.ObjectId;
-  identification: string;
+  cedula: string;
   names: string;
   lastName: string;
   birthDate: Date;
   jerseyNumber: number;
   photo?: string;
-  position?: string;
+  position?:
+    | "portero"
+    | "defensa"
+    | "lateral_derecho"
+    | "lateral_izquierdo"
+    | "volante"
+    | "mediocampista"
+    | "extremo_derecho"
+    | "extremo_izquierdo"
+    | "delantero";
   status: "activo" | "inactivo";
   _movements: Movement[];
 }
@@ -28,7 +37,7 @@ const Player = new Schema<Player>({
     ref: Collections.TEAMS,
     required: true,
   },
-  identification: { type: String, required: true },
+  cedula: { type: String, required: true },
   names: { type: String, required: true },
   lastName: { type: String, required: true },
   birthDate: { type: Date, required: true },

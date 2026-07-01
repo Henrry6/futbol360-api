@@ -171,6 +171,7 @@ export default async function UpRouter(
       options.controllers?.get ||
         (async (request, reply) => {
           prepareRequest(request);
+          debug(request.url);
           if (options.pre?.get) await options.pre.get(request);
           const [data, total] = await Promise.all([
             options.Model.smartQuery(request.query),
@@ -192,6 +193,7 @@ export default async function UpRouter(
       "/:id",
       options.controllers?.getOne ||
         (async (request, reply) => {
+          debug("Obteniendo documento", request.params.id);
           prepareRequest(request);
           const [documento] = await options.Model.smartQuery(request.query);
           if (!documento)
