@@ -64,8 +64,10 @@ export interface Championship {
   // Estado
   status: "planificado" | "activo" | "finalizado" | "cancelado";
   observations?: string;
+  competitionMode: "round_robin" | "round_robin_double" | "groups" | "knockout";
   _movements: Movement[];
 }
+
 const ChampionshipSchema = new Schema<Championship>({
   league: {
     type: SchemaTypes.ObjectId,
@@ -83,6 +85,11 @@ const ChampionshipSchema = new Schema<Championship>({
     type: String,
     enum: ["temporada", "apertura", "clausura", "copa", "amistoso"],
     default: "temporada",
+  },
+  competitionMode: {
+    type: String,
+    enum: ["round_robin", "round_robin_double", "groups", "knockout"],
+    default: "round_robin",
   },
   startDate: {
     type: Date,

@@ -102,6 +102,7 @@ export function uniqueDocValidator(
         if (value === undefined) return;
         query[field] = value;
       });
+      console.log(query, "QUERYYY");
       return (await this.constructor.countDocuments(query)) === 0;
     },
     message: ({ value }: any) =>

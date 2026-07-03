@@ -6,7 +6,7 @@ import { FastifyReply, FastifyRequest } from "fastify";
 import Leagues from "@/modules/leagues/leagues.service";
 import Jugadores from "@/modules/players/player.service";
 import Categorias from "@/modules/categories/category.service";
-import Campeonatos from "@/modules/championships/champioship.service";
+import Campeonatos from "@/modules/championships/championship.service";
 
 const debug = Debug("src:modules:leagues:leagues.controller");
 

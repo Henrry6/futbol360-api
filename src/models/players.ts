@@ -1,6 +1,6 @@
-import { Movement } from "@/libs/utils";
 import { Collections } from "@/libs/useful";
 import { Schema, SchemaTypes, Types } from "mongoose";
+import { Movement, uniqueDocValidator } from "@/libs/utils";
 
 export interface Player {
   _id: Types.ObjectId;
@@ -12,7 +12,7 @@ export interface Player {
   birthDate: Date;
   jerseyNumber: number;
   photo?: string;
-  position?:
+  position:
     | "portero"
     | "defensa"
     | "lateral_derecho"
@@ -37,13 +37,18 @@ const Player = new Schema<Player>({
     ref: Collections.TEAMS,
     required: true,
   },
-  cedula: { type: String, required: true },
+  cedula: {
+    type: String,
+    required: true,
+    validate: uniqueDocValidator(["cedula"]),
+    minLength: 10,
+  },
   names: { type: String, required: true },
   lastName: { type: String, required: true },
   birthDate: { type: Date, required: true },
   jerseyNumber: { type: Number, required: true },
   photo: String,
-  position: String,
+  position: { type: String, required: true },
   status: { type: String, default: "activo" },
   _movements: { type: [Movement] },
 });
