@@ -4,20 +4,14 @@ import { Schema, SchemaTypes, Types } from "mongoose";
 
 export interface Round {
   _id: Types.ObjectId;
-
   league: Types.ObjectId;
-
   championship: Types.ObjectId;
-
   round: number;
-
   name: string;
   group?: string;
   // Referencia a la etapa del campeonato
   stage: Types.ObjectId;
-
   status: "pendiente" | "en_juego" | "finalizado";
-
   _movements: Movement[];
 }
 

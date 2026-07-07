@@ -4,11 +4,13 @@ import Match from "@/modules/matchs/service";
 import { Collections } from "@/libs/useful";
 import { getCompetition } from "./competicion";
 import mongooseSmartQuery from "mongoose-smart-query";
+import { calculateStandings } from "./competicion/standings";
 import { FastifyError, msqTemporalOptions } from "@/libs/utils";
 import ChampionshipSchema, {
   Championship,
   ChampionshipDocument,
   ChampionshipModel,
+  ChampionshipStage,
 } from "../../models/champions";
 
 ChampionshipSchema.plugin(mongooseSmartQuery, {
@@ -87,6 +89,33 @@ ChampionshipSchema.methods.deleteFixture = async function (stageId: string) {
   } finally {
     await session.endSession();
   }
+};
+
+ChampionshipSchema.methods.getCurrentStage = function (
+  stageId?: Types.ObjectId,
+): ChampionshipStage {
+  const stage = stageId
+    ? this.stages.find((s) => s._id.equals(stageId))
+    : this.stages.find(
+        (s) => s.status === "generada" || s.status === "finalizada",
+      );
+  if (!stage) {
+    throw new FastifyError("No se encontró la etapa.");
+  }
+
+  return stage;
+};
+
+ChampionshipSchema.methods.tablePositions = async function (
+  stageId?: Types.ObjectId,
+) {
+  const stage = this.getCurrentStage(stageId);
+
+  if (stage.mode === "knockout") {
+    throw new FastifyError("La etapa no tiene tabla de posiciones.");
+  }
+
+  return calculateStandings(this, stage);
 };
 
 export default model<Championship, ChampionshipModel>(

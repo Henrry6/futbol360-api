@@ -4,28 +4,17 @@ import { Schema, SchemaTypes, Types } from "mongoose";
 
 export interface Match {
   _id: Types.ObjectId;
-
   league: Types.ObjectId;
-
   championship: Types.ObjectId;
-
   round: Types.ObjectId;
   stage: Types.ObjectId;
-
   localTeam: Types.ObjectId;
-
   visitorTeam: Types.ObjectId;
-
   date?: Date;
-
   localGoals?: number;
-
   visitorGoals?: number;
-
   status: "programado" | "en_juego" | "finalizado" | "suspendido";
-
   observations?: string;
-
   _movements: Movement[];
 }
 

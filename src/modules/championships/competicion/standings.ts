@@ -368,34 +368,31 @@ import { rankStandings } from "./rankings";
 
 // Standings = Calcular tabla
 import Debug from "debug";
+import Equipos from "@/modules/teams/team.service";
 
 const debug = Debug("src:modules:championships:competicion:standings");
 
 export interface Standing {
   // Equipo al que pertenecen las estadísticas.
   team: Types.ObjectId;
-
+  // Nombre del equipo
+  name: string;
+  // Escudo
+  logo?: string;
   // Total de partidos disputados.
   played: number;
-
   // Partidos ganados.
   wins: number;
-
   // Partidos empatados.
   draws: number;
-
   // Partidos perdidos.
   losses: number;
-
   // Goles anotados a favor.
   goalsFor: number;
-
   // Goles recibidos.
   goalsAgainst: number;
-
   // Diferencia de goles (goles a favor - goles en contra).
   goalDifference: number;
-
   // Puntos obtenidos según el reglamento del campeonato.
   //
   // Normalmente:
@@ -417,17 +414,32 @@ export async function calculateStandings(
   const matches = await Partidos.find({
     championship: championship._id,
     stage: stage._id,
-    status: "finalizado",
+    status: "programado",
   });
 
   const standings = new Map<string, Standing>();
 
   const participants = await getStageParticipants(championship, stage);
-
+  const teams = await Equipos.find(
+    {
+      _id: { $in: participants },
+    },
+    {
+      _id: 1,
+      name: 1,
+      logo: 1,
+    },
+  ).lean();
+  const teamMap = new Map(teams.map((team) => [team._id.toString(), team]));
   // Inicializamos tabla
-  for (const team of participants) {
-    standings.set(team.toString(), {
-      team,
+  for (const teamId of participants) {
+    const team = teamMap.get(teamId.toString());
+
+    standings.set(teamId.toString(), {
+      team: teamId,
+      name: team?.name ?? "",
+
+      logo: team?.logo,
 
       played: 0,
 

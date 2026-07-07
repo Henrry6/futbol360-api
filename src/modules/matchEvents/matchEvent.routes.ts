@@ -1,0 +1,9 @@
+import UpRouter from "@/libs/UpRouter";
+import { FastifyInstance } from "fastify";
+import MatchEventReport from "./matchEvent.service";
+
+export async function matchEventRoutes(app: FastifyInstance) {
+  app.register(async (app) => {
+    app.register(UpRouter, { Model: MatchEventReport });
+  });
+}

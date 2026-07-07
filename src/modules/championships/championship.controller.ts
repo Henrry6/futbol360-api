@@ -101,6 +101,19 @@ export default {
       message: "Fixture eliminado correctamente",
     });
   },
+  tablePositions: async (req: FastifyRequest, reply: FastifyReply) => {
+    const { id } = req.params as { id: string };
+    const { stageId } = req.query as { stageId?: string };
+    const championship = await Campeonato.findOne({
+      _id: id,
+      league: req.payload.league,
+    });
+    if (!championship) {
+      throw new FastifyError("No se encontró el campeonato.");
+    }
+    const standings = await championship.tablePositions(stageId as any);
+    reply.send(standings);
+  },
   createStage: async (req: FastifyRequest, reply: FastifyReply) => {
     const { id } = req.params as { id: string };
     const body = req.body as StageBody;

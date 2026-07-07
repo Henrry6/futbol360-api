@@ -9,6 +9,9 @@ const competitions = {
   groups,
   knockout,
 };
-export function getCompetition(mode: keyof typeof competitions) {
+
+export type CompetitionMode = keyof typeof competitions;
+
+export function getCompetition(mode: CompetitionMode) {
   return competitions[mode];
 }
