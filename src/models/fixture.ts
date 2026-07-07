@@ -12,6 +12,15 @@ export interface Fixture {
   round: number;
 
   name: string;
+  group?: string;
+  stage?:
+    | "liga"
+    | "grupos"
+    | "octavos"
+    | "cuartos"
+    | "semifinal"
+    | "tercer_puesto"
+    | "final";
 
   status: "pendiente" | "en_juego" | "finalizado";
 
@@ -42,7 +51,21 @@ const Fixture = new Schema<Fixture>({
     type: String,
     required: true,
   },
-
+  stage: {
+    type: String,
+    enum: [
+      "liga",
+      "grupos",
+      "octavos",
+      "cuartos",
+      "semifinal",
+      "tercer_puesto",
+      "final",
+    ],
+  },
+  group: {
+    type: String,
+  },
   status: {
     type: String,
     enum: ["pendiente", "en_juego", "finalizado"],

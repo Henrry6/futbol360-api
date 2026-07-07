@@ -1,6 +1,6 @@
 import { Movement } from "@/libs/utils";
 import { Collections } from "@/libs/useful";
-import { Schema, SchemaTypes, Types } from "mongoose";
+import { HydratedDocument, Schema, SchemaTypes, Types, Model } from "mongoose";
 
 export interface ChampionshipTeam {
   team: Types.ObjectId;
@@ -68,7 +68,25 @@ export interface Championship {
   _movements: Movement[];
 }
 
-const ChampionshipSchema = new Schema<Championship>({
+export interface ChampionshipMethods {
+  generateFixture(this: ChampionshipDocument): Promise<void>;
+  calculateStandings(): Promise<void>;
+  nextRound(): Promise<void>;
+  finishChampionship(): Promise<void>;
+}
+
+export type ChampionshipDocument = HydratedDocument<
+  Championship,
+  ChampionshipMethods
+>;
+
+export type ChampionshipModel = Model<Championship, {}, ChampionshipMethods>;
+
+const ChampionshipSchema = new Schema<
+  Championship,
+  ChampionshipModel,
+  ChampionshipMethods
+>({
   league: {
     type: SchemaTypes.ObjectId,
     ref: Collections.LEAGUES,
