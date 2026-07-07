@@ -2,6 +2,42 @@ import { Movement } from "@/libs/utils";
 import { Collections } from "@/libs/useful";
 import { HydratedDocument, Schema, SchemaTypes, Types, Model } from "mongoose";
 
+export interface ChampionshipStage extends Types.Subdocument {
+  _id: Types.ObjectId;
+  order: number;
+  name: string;
+  mode: "round_robin" | "round_robin_double" | "groups" | "knockout";
+  status: "pendiente" | "generada" | "activa" | "finalizada";
+  // Solo para grupos
+  groups?: number;
+
+  // Clasificados a la siguiente etapa
+  qualifyTeams?: number;
+
+  // Para eliminación directa
+  thirdPlaceMatch?: boolean;
+  participants?: number;
+}
+
+const ChampionshipStageSchema = new Schema<ChampionshipStage>({
+  order: { type: Number, required: true },
+  name: { type: String, required: true },
+  mode: {
+    type: String,
+    enum: ["round_robin", "round_robin_double", "groups", "knockout"],
+    default: "round_robin",
+  },
+  status: {
+    type: String,
+    enum: ["pendiente", "generada", "activa", "finalizada"],
+    default: "pendiente",
+  },
+  groups: { type: Number },
+  participants: { type: Number },
+  qualifyTeams: { type: Number },
+  thirdPlaceMatch: { type: Boolean },
+});
+
 export interface ChampionshipTeam {
   team: Types.ObjectId;
   status: "activo" | "retirado" | "expulsado";
@@ -55,6 +91,8 @@ export interface Championship {
   endDate?: Date;
   // Equipos participantes
   teams: ChampionshipTeam[];
+  stages: Types.DocumentArray<ChampionshipStage>;
+  currentStage: number;
   // Campeón
   champion?: Types.ObjectId;
   // Subcampeón
@@ -70,6 +108,7 @@ export interface Championship {
 
 export interface ChampionshipMethods {
   generateFixture(this: ChampionshipDocument): Promise<void>;
+  deleteFixture(this: ChampionshipDocument, etapaId: string): Promise<void>;
   calculateStandings(): Promise<void>;
   nextRound(): Promise<void>;
   finishChampionship(): Promise<void>;
@@ -115,6 +154,8 @@ const ChampionshipSchema = new Schema<
   },
   endDate: Date,
   teams: { type: [ChampionshipTeamSchema], default: [] },
+  stages: { type: [ChampionshipStageSchema], default: [] },
+  currentStage: { type: Number, default: 0 },
   champion: { type: SchemaTypes.ObjectId, ref: Collections.TEAMS },
   runnerUp: { type: SchemaTypes.ObjectId, ref: Collections.TEAMS },
   thirdPlace: { type: SchemaTypes.ObjectId, ref: Collections.TEAMS },

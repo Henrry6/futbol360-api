@@ -6,6 +6,12 @@ import cotroller from "@/modules/championships/championship.controller";
 export async function championsRoutes(app: FastifyInstance) {
   app.register(async (app) => {
     app.register(UpRouter, { Model: Champions });
-    app.get("/:id/generate-fixture", cotroller.generateFixture);
+    app.post("/:id/generate-fixture", cotroller.generateFixture);
+    app.delete("/:id/fixtures/:stageId", cotroller.deleteFixture);
+    // Rutas stages
+    app.post("/:id/stages", cotroller.createStage);
+    app.get("/:id/stages", cotroller.getStages);
+    app.put("/:id/stages/:stageId", cotroller.updateStage);
+    app.delete("/:id/stages/:stageId", cotroller.deleteStage);
   });
 }

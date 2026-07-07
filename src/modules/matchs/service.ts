@@ -2,7 +2,7 @@ import { model } from "mongoose";
 import { Collections } from "@/libs/useful";
 import { msqTemporalOptions } from "@/libs/utils";
 import mongooseSmartQuery from "mongoose-smart-query";
-import MatchSchema, { Player } from "../../models/players";
+import MatchSchema, { Match } from "../../models/matchs";
 
 MatchSchema.plugin(mongooseSmartQuery, {
   defaultFields:
@@ -11,4 +11,10 @@ MatchSchema.plugin(mongooseSmartQuery, {
   ...msqTemporalOptions,
 });
 
-export default model<Player>(Collections.MATCHES, MatchSchema);
+MatchSchema.index({
+  championship: 1,
+  stage: 1,
+  status: 1,
+});
+
+export default model<Match>(Collections.MATCHES, MatchSchema);

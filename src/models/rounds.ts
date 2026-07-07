@@ -2,7 +2,7 @@ import { Movement } from "@/libs/utils";
 import { Collections } from "@/libs/useful";
 import { Schema, SchemaTypes, Types } from "mongoose";
 
-export interface Fixture {
+export interface Round {
   _id: Types.ObjectId;
 
   league: Types.ObjectId;
@@ -13,21 +13,15 @@ export interface Fixture {
 
   name: string;
   group?: string;
-  stage?:
-    | "liga"
-    | "grupos"
-    | "octavos"
-    | "cuartos"
-    | "semifinal"
-    | "tercer_puesto"
-    | "final";
+  // Referencia a la etapa del campeonato
+  stage: Types.ObjectId;
 
   status: "pendiente" | "en_juego" | "finalizado";
 
   _movements: Movement[];
 }
 
-const Fixture = new Schema<Fixture>({
+const Round = new Schema<Round>({
   league: {
     type: SchemaTypes.ObjectId,
     ref: Collections.LEAGUES,
@@ -42,30 +36,10 @@ const Fixture = new Schema<Fixture>({
     index: true,
   },
 
-  round: {
-    type: Number,
-    required: true,
-  },
-
-  name: {
-    type: String,
-    required: true,
-  },
-  stage: {
-    type: String,
-    enum: [
-      "liga",
-      "grupos",
-      "octavos",
-      "cuartos",
-      "semifinal",
-      "tercer_puesto",
-      "final",
-    ],
-  },
-  group: {
-    type: String,
-  },
+  round: { type: Number, required: true },
+  name: { type: String, required: true },
+  stage: { type: SchemaTypes.ObjectId },
+  group: { type: String },
   status: {
     type: String,
     enum: ["pendiente", "en_juego", "finalizado"],
@@ -77,4 +51,4 @@ const Fixture = new Schema<Fixture>({
   },
 });
 
-export default Fixture;
+export default Round;

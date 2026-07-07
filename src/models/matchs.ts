@@ -9,7 +9,8 @@ export interface Match {
 
   championship: Types.ObjectId;
 
-  fixture: Types.ObjectId;
+  round: Types.ObjectId;
+  stage: Types.ObjectId;
 
   localTeam: Types.ObjectId;
 
@@ -43,12 +44,13 @@ const Match = new Schema<Match>({
     index: true,
   },
 
-  fixture: {
+  round: {
     type: SchemaTypes.ObjectId,
-    ref: Collections.FIXTURES,
+    ref: Collections.ROUNDS,
     required: true,
     index: true,
   },
+  stage: { type: SchemaTypes.ObjectId },
 
   localTeam: {
     type: SchemaTypes.ObjectId,
