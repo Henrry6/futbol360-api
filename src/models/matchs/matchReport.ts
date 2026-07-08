@@ -157,52 +157,24 @@ const MatchReportSchema = new Schema<MatchReport>({
     enum: ["borrador", "en_juego", "finalizada"],
     default: "borrador",
   },
-
   startTime: Date,
-
   endTime: Date,
-
-  referee: {
-    type: SchemaTypes.ObjectId,
-    ref: Collections.REFEREES,
-  },
-
+  referee: { type: SchemaTypes.ObjectId, ref: Collections.REFEREES },
   assistantReferees: [
-    {
-      type: SchemaTypes.ObjectId,
-      ref: Collections.REFEREES,
-    },
+    { type: SchemaTypes.ObjectId, ref: Collections.REFEREES },
   ],
-
-  vocal: {
-    type: SchemaTypes.ObjectId,
-    ref: Collections.USERS,
-  },
-
+  vocal: { type: SchemaTypes.ObjectId, ref: Collections.USERS },
   attendance: Number,
-
   income: Number,
-
   refereeRating: {
     type: String,
     enum: ["muy_buena", "buena", "regular", "mala"],
   },
-
   refereeReport: String,
-
   vocalReport: String,
-
   observations: String,
-
-  local: {
-    type: TeamReportSchema,
-    required: true,
-  },
-
-  visitor: {
-    type: TeamReportSchema,
-    required: true,
-  },
+  local: { type: TeamReportSchema, required: true },
+  visitor: { type: TeamReportSchema, required: true },
   _movements: {
     type: [Movement],
   },

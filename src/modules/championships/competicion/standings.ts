@@ -414,7 +414,7 @@ export async function calculateStandings(
   const matches = await Partidos.find({
     championship: championship._id,
     stage: stage._id,
-    status: "programado",
+    status: "finalizado",
   });
 
   const standings = new Map<string, Standing>();
@@ -438,23 +438,14 @@ export async function calculateStandings(
     standings.set(teamId.toString(), {
       team: teamId,
       name: team?.name ?? "",
-
       logo: team?.logo,
-
       played: 0,
-
       wins: 0,
-
       draws: 0,
-
       losses: 0,
-
       goalsFor: 0,
-
       goalsAgainst: 0,
-
       goalDifference: 0,
-
       points: 0,
       position: 0,
     });
@@ -512,7 +503,4 @@ export async function calculateStandings(
   const table = Array.from(standings.values());
 
   return rankStandings(table);
-
-  //  b.win - a.win ||
-  //       a.team.toString().localeCompare(b.team.toString()),
 }

@@ -159,24 +159,18 @@ export default {
     };
 
     const body = req.body as Partial<StageBody>;
-
     const championship = await Campeonato.findOne({
       _id: id,
       league: req.payload.league,
     });
-
     if (!championship) {
       throw new FastifyError("No se encontró el campeonato");
     }
-
     const stage = championship.stages.id(stageId);
-
     if (!stage) {
       throw new FastifyError("No se encontró la etapa");
     }
-
     Object.assign(stage, body);
-
     await championship.save();
 
     reply.send({

@@ -5,8 +5,8 @@ import mongooseSmartQuery from "mongoose-smart-query";
 import RoundSchema, { Round } from "../../models/rounds";
 
 RoundSchema.plugin(mongooseSmartQuery, {
-  defaultFields: "names league round championship status stage",
-  fieldsForDefaultQuery: "names ",
+  defaultFields: "round name league championship status stage",
+  fieldsForDefaultQuery: "name",
   ...msqTemporalOptions,
 });
 

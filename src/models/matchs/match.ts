@@ -1,6 +1,6 @@
 import { Movement } from "@/libs/utils";
 import { Collections } from "@/libs/useful";
-import { Schema, SchemaTypes, Types } from "mongoose";
+import { HydratedDocument, Model, Schema, SchemaTypes, Types } from "mongoose";
 
 export interface Match {
   _id: Types.ObjectId;
@@ -18,7 +18,15 @@ export interface Match {
   _movements: Movement[];
 }
 
-const Match = new Schema<Match>({
+export interface MatchMethods {
+  start(vocalId: Types.ObjectId): Promise<Match>;
+  revertStart(): Promise<Match>;
+}
+export type MatchDocument = HydratedDocument<Match, MatchMethods>;
+
+export type MatchModel = Model<Match, {}, MatchMethods>;
+
+const Match = new Schema<Match, MatchModel, MatchDocument>({
   league: {
     type: SchemaTypes.ObjectId,
     ref: Collections.LEAGUES,

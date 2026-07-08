@@ -45,7 +45,6 @@ ChampionshipSchema.methods.deleteFixture = async function (stageId: string) {
           _id: 1,
         },
       ).session(session);
-      console.log(rounds, stageId, this._id, "XXX");
       if (rounds.length === 0) {
         throw new FastifyError("No existen rondas generadas en esa etapa");
       }
@@ -59,17 +58,15 @@ ChampionshipSchema.methods.deleteFixture = async function (stageId: string) {
 
       if (existsPlayedMatch) {
         throw new FastifyError(
-          "No se puede eliminar una etapa que ya tiene partidos jugados.",
+          "No se puede eliminar una etapa que ya tiene partidos en juego o finalizados.",
         );
       }
-
       await Match.deleteMany(
         {
           round: { $in: roundIds },
         },
         { session },
       );
-
       await Rounds.deleteMany(
         {
           championship: this._id,
@@ -77,9 +74,7 @@ ChampionshipSchema.methods.deleteFixture = async function (stageId: string) {
         },
         { session },
       );
-
       const stage = this.stages.id(stageId);
-
       if (stage) {
         stage.status = "pendiente";
       }
@@ -97,10 +92,12 @@ ChampionshipSchema.methods.getCurrentStage = function (
   const stage = stageId
     ? this.stages.find((s) => s._id.equals(stageId))
     : this.stages.find(
-        (s) => s.status === "generada" || s.status === "finalizada",
+        (s) => s.status === "activa" || s.status === "finalizada",
       );
   if (!stage) {
-    throw new FastifyError("No se encontró la etapa.");
+    throw new FastifyError(
+      "No se encontró la etapa o no existen etapas activas o finalizadas.",
+    );
   }
 
   return stage;
