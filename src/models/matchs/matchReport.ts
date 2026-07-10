@@ -1,6 +1,6 @@
 import { Movement } from "@/libs/utils";
 import { Collections } from "@/libs/useful";
-import { Schema, SchemaTypes, Types } from "mongoose";
+import { HydratedDocument, Model, Schema, SchemaTypes, Types } from "mongoose";
 
 export interface TeamReport {
   // Equipo al que pertenece la información
@@ -24,6 +24,7 @@ export interface TeamReport {
 
 export interface MatchReport {
   _id: Types.ObjectId;
+  league: Types.ObjectId;
   // Campeonato al que pertenece
   championship: Types.ObjectId;
 
@@ -124,7 +125,21 @@ const TeamReportSchema = new Schema(
   },
 );
 
-const MatchReportSchema = new Schema<MatchReport>({
+export interface MatchReportMethods {
+  finish(status: "finalizado" | "suspendido", user: string): Promise<void>;
+}
+
+export type VocaliaDocument = HydratedDocument<MatchReport, MatchReportMethods>;
+
+export type VocaliaModel = Model<MatchReport, {}, MatchReportMethods>;
+
+const MatchReportSchema = new Schema<MatchReport, VocaliaModel>({
+  league: {
+    type: SchemaTypes.ObjectId,
+    ref: Collections.LEAGUES,
+    required: true,
+    index: true,
+  },
   championship: {
     type: SchemaTypes.ObjectId,
     ref: Collections.CHAMPIONSHIPS,

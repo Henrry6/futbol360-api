@@ -2,6 +2,7 @@ import mongoose, { Types } from "mongoose";
 import Round from "@/modules/rounds/service";
 import Partidos from "@/modules/matchs/service";
 import { ChampionshipDocument, ChampionshipStage } from "@/models/champions";
+import { BracketMatch } from "./brackets";
 
 export function shuffle<T>(array: T[]): T[] {
   const arr = [...array];
@@ -25,6 +26,7 @@ export async function createRound(
   stage: ChampionshipStage,
   roundNumber: number,
   session: mongoose.ClientSession,
+  name?: string,
 ) {
   const [round] = await Round.create(
     [
@@ -33,7 +35,7 @@ export async function createRound(
         championship: championship._id,
         stage: stage._id,
         round: roundNumber,
-        name: `Jornada ${roundNumber}`,
+        name: name ?? `Jornada ${roundNumber}`,
         status: "pendiente",
       },
     ],
@@ -91,4 +93,43 @@ export function prepareTeams(
     shuffled.push(null);
   }
   return shuffled;
+}
+
+/**
+ * Crea los partidos de una llave eliminatoria.
+ *
+ * Los enfrentamientos ya vienen definidos por `createBracket()`,
+ * por lo que esta función únicamente persiste los partidos.
+ *
+ * @param championship Campeonato al que pertenecen los partidos.
+ * @param round Jornada donde se crearán los partidos.
+ * @param stage Etapa eliminatoria (Cuartos, Semifinal, Final, etc.).
+ * @param bracket Llave generada con los enfrentamientos.
+ * @param session Sesión de MongoDB para ejecutar la operación dentro de una transacción.
+ */
+export async function createBracketMatches(
+  championship: ChampionshipDocument,
+  round: Types.ObjectId,
+  stage: ChampionshipStage,
+  bracket: BracketMatch[],
+  session: mongoose.ClientSession,
+) {
+  for (const match of bracket) {
+    await Partidos.create(
+      [
+        {
+          league: championship.league,
+          championship: championship._id,
+          round,
+          stage: stage._id,
+          localTeam: match.local.team,
+          visitorTeam: match.visitor.team,
+          status: "programado",
+        },
+      ],
+      {
+        session,
+      },
+    );
+  }
 }

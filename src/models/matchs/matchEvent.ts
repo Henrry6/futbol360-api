@@ -22,7 +22,9 @@ export type MatchEventType =
 
 export interface MatchEvent {
   _id: Types.ObjectId;
+  league: Types.ObjectId;
 
+  vocalia: Types.ObjectId;
   // Partido al que pertenece el evento
   match: Types.ObjectId;
 
@@ -59,9 +61,22 @@ export interface MatchEvent {
 }
 
 const MatchEventSchema = new Schema<MatchEvent>({
+  league: {
+    type: SchemaTypes.ObjectId,
+    ref: Collections.LEAGUES,
+    required: true,
+    index: true,
+  },
+
   championship: {
     type: SchemaTypes.ObjectId,
     ref: Collections.CHAMPIONSHIPS,
+    required: true,
+    index: true,
+  },
+  vocalia: {
+    type: SchemaTypes.ObjectId,
+    ref: Collections.MATCHS_REPORTS,
     required: true,
     index: true,
   },

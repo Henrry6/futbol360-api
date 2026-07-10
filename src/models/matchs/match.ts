@@ -61,19 +61,9 @@ const Match = new Schema<Match, MatchModel, MatchDocument>({
     required: true,
   },
 
-  date: {
-    type: Date,
-  },
-
-  localGoals: {
-    type: Number,
-    default: 0,
-  },
-
-  visitorGoals: {
-    type: Number,
-    default: 0,
-  },
+  date: { type: Date },
+  localGoals: { type: Number, default: 0 },
+  visitorGoals: { type: Number, default: 0 },
 
   status: {
     type: String,
@@ -81,13 +71,8 @@ const Match = new Schema<Match, MatchModel, MatchDocument>({
     default: "programado",
   },
 
-  observations: {
-    type: String,
-  },
-
-  _movements: {
-    type: [Movement],
-  },
+  observations: { type: String },
+  _movements: { type: [Movement] },
 });
 
 export default Match;

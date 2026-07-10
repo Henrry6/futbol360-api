@@ -43,7 +43,9 @@ export type TiposMovimiento =
   | "edit"
   | "issued"
   | "draft"
-  | "failed";
+  | "failed"
+  | "finalizado"
+  | "suspendido";
 
 /**
  * Obtiene información del movimiento para poder agregarlo al array de
@@ -72,6 +74,12 @@ export const getMovimiento = async (args: {
         break;
       case "edit":
         nota = "Editado";
+        break;
+      case "finalizado":
+        nota = "Finalizado";
+        break;
+      case "suspendido":
+        nota = "Suspendido";
         break;
       case "issued":
         nota = "Emitido";

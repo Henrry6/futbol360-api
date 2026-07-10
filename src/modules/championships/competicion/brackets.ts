@@ -1,20 +1,12 @@
 // brackets.ts
 
-import { Types } from "mongoose";
 import { Standing } from "./standings";
 
 export interface BracketMatch {
   order: number;
-  local: {
-    team: Types.ObjectId;
-    position: number;
-  };
-  visitor: {
-    team: Types.ObjectId;
-    position: number;
-  };
+  local: Standing;
+  visitor: Standing;
 }
-
 export function createBracket(qualifiers: Standing[]): BracketMatch[] {
   const matches: BracketMatch[] = [];
 
