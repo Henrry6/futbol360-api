@@ -1,4 +1,5 @@
 import Debug from "debug";
+import Partidos from "../matchs/service";
 import Users from "../users/users.service";
 import { FastifyError } from "@/libs/utils";
 import Equipos from "@/modules/teams/team.service";
@@ -21,7 +22,7 @@ export default {
       throw new FastifyError("No se encontró la liga");
     }
 
-    const [campeonatos, categorias, equipos, jugadores, usuarios] =
+    const [campeonatos, categorias, equipos, partidos, jugadores, usuarios] =
       await Promise.all([
         Campeonatos.countDocuments({
           league: req.payload.league,
@@ -35,6 +36,10 @@ export default {
           league: req.payload.league,
           status: "activo",
         }),
+        Partidos.countDocuments({
+          league: req.payload.league,
+          status: "programado",
+        }),
         Jugadores.countDocuments({
           league: req.payload.league,
           status: "activo",
@@ -42,7 +47,7 @@ export default {
         Users.countDocuments({
           leagues: req.payload.league,
           status: "activo",
-          role: { $ne: "master" },
+          roles: { $ne: "master" },
         }),
       ]);
 
@@ -50,6 +55,7 @@ export default {
       campeonatos,
       categorias,
       equipos,
+      partidos,
       jugadores,
       usuarios,
     });

@@ -4,7 +4,7 @@ import { FastifyReply, FastifyRequest } from "fastify";
 export interface JwtUser {
   user: Types.ObjectId;
   username: string;
-  role?: string;
+  roles?: string[];
   league?: Types.ObjectId;
 }
 

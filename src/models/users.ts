@@ -14,7 +14,12 @@ export interface User {
   username: string;
   email: string;
   password: string;
-  role: "master" | "admin" | "directivo" | "player";
+  roles: ("master" | "admin" | "directivo" | "player" | "official")[];
+  official?: {
+    canReferee: boolean;
+    canAssist: boolean;
+    canBeVocal: boolean;
+  };
   leagues: Types.ObjectId[];
   status: "activo" | "inactivo";
   _movements: Movement[];
@@ -28,7 +33,7 @@ const UserSchema = new Schema<UserDocument>(
     username: { type: String, required: true, unique: true },
     password: { type: String, required: true },
     email: { type: String, required: true, unique: true },
-    role: { type: String, enum: Object.values(UserRole), required: true },
+    roles: { type: [String], enum: Object.values(UserRole), required: true },
     leagues: [
       {
         type: SchemaTypes.ObjectId,

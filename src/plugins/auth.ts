@@ -25,8 +25,15 @@ export default fp(async (app) => {
 
 export function authorize(...roles: string[]) {
   return async (request: FastifyRequest, reply: FastifyReply) => {
-    const userRole = request.payload.role;
-    if (!userRole || !roles.includes(userRole)) {
+    const userRole = (request.payload as any)?.roles;
+
+    const hasRole = Array.isArray(userRole)
+      ? userRole.some((r) => roles.includes(r))
+      : typeof userRole === "string"
+      ? roles.includes(userRole)
+      : false;
+
+    if (!hasRole) {
       return reply.status(403).send({
         message: "No tienes permisos para acceder a este recurso",
       });

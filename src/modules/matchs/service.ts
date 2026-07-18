@@ -71,8 +71,9 @@ async function startRound(match: MatchDocument) {
 }
 
 MatchSchema.plugin(mongooseSmartQuery, {
-  defaultFields:
-    "names league round { name round } stage championship localTeam visitorTeam date status localGoals visitorGoals",
+  defaultFields: `names league round { name round } stage championship \ 
+localTeam { logo name } visitorTeam { logo name } date status localGoals \
+visitorGoals`,
   fieldsForDefaultQuery: "observations",
   ...msqTemporalOptions,
 });

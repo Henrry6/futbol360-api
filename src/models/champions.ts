@@ -1,4 +1,4 @@
-import { Movement } from "@/libs/utils";
+import { Movement, removeEmpty } from "@/libs/utils";
 import { Collections } from "@/libs/useful";
 import { HydratedDocument, Schema, SchemaTypes, Types, Model } from "mongoose";
 import { Standing } from "@/modules/championships/competicion/standings";
@@ -8,7 +8,7 @@ export interface ChampionshipStage {
   order: number;
   name: string;
   mode: "round_robin" | "round_robin_double" | "groups" | "knockout";
-  status: "pendiente" | "generada" | "activa" | "finalizada";
+  status: "pendiente" | "generada" | "en_juego" | "finalizada";
   // Solo para grupos
   groups?: number;
 
@@ -30,7 +30,7 @@ const ChampionshipStageSchema = new Schema<ChampionshipStage>({
   },
   status: {
     type: String,
-    enum: ["pendiente", "generada", "activa", "finalizada"],
+    enum: ["pendiente", "generada", "en_juego", "finalizada"],
     default: "pendiente",
   },
   groups: { type: Number },
@@ -152,7 +152,7 @@ const ChampionshipSchema = new Schema<
   endDate: Date,
   teams: { type: [ChampionshipTeamSchema], default: [] },
   stages: { type: [ChampionshipStageSchema], default: [] },
-  currentStage: { type: SchemaTypes.ObjectId },
+  currentStage: { type: SchemaTypes.ObjectId, set: removeEmpty },
   champion: { type: SchemaTypes.ObjectId, ref: Collections.TEAMS },
   runnerUp: { type: SchemaTypes.ObjectId, ref: Collections.TEAMS },
   thirdPlace: { type: SchemaTypes.ObjectId, ref: Collections.TEAMS },

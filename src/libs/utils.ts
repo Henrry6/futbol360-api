@@ -2,7 +2,7 @@ import bcrypt from "bcryptjs";
 import { User } from "@/models/users";
 import { Collections } from "./useful";
 import { getMailer } from "@/plugins/mailer-instance";
-import { model, Schema, SchemaTypes, Types } from "mongoose";
+import mongoose, { model, Schema, SchemaTypes, Types } from "mongoose";
 import { deepmergeCustom, DeepMergeLeafURI } from "deepmerge-ts";
 
 export const deepmerge = deepmergeCustom<{
@@ -152,4 +152,23 @@ export async function sendMail(options: {
   text?: string;
 }) {
   await getMailer().send(options);
+}
+
+export function removeEmpty(val: string | number | object | undefined) {
+  if (val instanceof Types.ObjectId || mongoose.isValidObjectId(val)) {
+    return val;
+  }
+  if (
+    val === "" ||
+    val === null ||
+    (typeof val === "object" && Object.keys(val).length < 1)
+  ) {
+    return undefined;
+  }
+  const tipoDato = typeof val;
+  if (tipoDato === "number") {
+    return val;
+  } else {
+    return !val || (<string>val).length === 0 ? undefined : val;
+  }
 }

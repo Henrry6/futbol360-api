@@ -1,8 +1,9 @@
 import { model, Types } from "mongoose";
-import Rounds from "@/modules/rounds/service";
 import Match from "@/modules/matchs/service";
 import { Collections } from "@/libs/useful";
+import Rounds from "@/modules/rounds/service";
 import { getCompetition } from "./competicion";
+import teamService from "../teams/team.service";
 import mongooseSmartQuery from "mongoose-smart-query";
 import { calculateStandings } from "./competicion/standings";
 import { FastifyError, msqTemporalOptions } from "@/libs/utils";
@@ -15,9 +16,28 @@ import ChampionshipSchema, {
 
 ChampionshipSchema.plugin(mongooseSmartQuery, {
   defaultFields:
-    "name league categoy teams stages currentStage champion runnerUp thirdPlace status observations",
+    "name league category { name } teams stages currentStage champion runnerUp thirdPlace status observations",
   fieldsForDefaultQuery: "name code",
   ...msqTemporalOptions,
+});
+
+ChampionshipSchema.pre("deleteOne", { document: true }, async function (this) {
+  const championshipId = this._id;
+
+  const [matches] = await Promise.all([
+    Match.exists({ championship: championshipId }),
+  ]);
+
+  if (this.teams.length > 0) {
+    throw new FastifyError(
+      "No puede eliminar el campeonato porque existen equipos asociados.",
+    );
+  }
+  if (matches) {
+    throw new FastifyError(
+      "No puede eliminar el campeonato porque existen partidos generados.",
+    );
+  }
 });
 
 ChampionshipSchema.methods.generateFixture = async function (
@@ -92,11 +112,11 @@ ChampionshipSchema.methods.getCurrentStage = function (
   const stage = stageId
     ? this.stages.find((s) => s._id.equals(stageId))
     : this.stages.find(
-        (s) => s.status === "activa" || s.status === "finalizada",
+        (s) => s.status === "en_juego" || s.status === "finalizada",
       );
   if (!stage) {
     throw new FastifyError(
-      "No se encontró la etapa o no existen etapas activas o finalizadas.",
+      "No se encontró la etapa o no existen etapas en juegomon o finalizadas.",
     );
   }
 

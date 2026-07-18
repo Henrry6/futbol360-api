@@ -26,23 +26,4 @@ export default {
     await vocalia.finish(req.body.status, req.payload.user);
     reply.send("Vocalia finalizada");
   },
-  revertStart: async (
-    req: FastifyRequest<{
-      Params: {
-        id: string;
-      };
-    }>,
-    reply: FastifyReply,
-  ) => {
-    const { id } = req.params;
-    const match = await MatchModel.findById(id);
-    if (!match) {
-      throw new FastifyError("Partido no encontrado");
-    }
-    await match.revertStart();
-    reply.send({
-      success: true,
-      data: match,
-    });
-  },
 };

@@ -32,7 +32,7 @@ export const authUser = {
         404,
       );
     }
-    if (user.role !== "master") {
+    if (!user.roles.includes("master")) {
       throw new FastifyError(
         `El usuario ${req.body.username} no es administrador`,
         404,
@@ -46,7 +46,7 @@ export const authUser = {
       {
         user: user._id,
         username: user.username,
-        role: user.role,
+        roles: user.roles,
       },
       {
         expiresIn: "7d",
@@ -58,7 +58,7 @@ export const authUser = {
       user: {
         id: user._id,
         name: user.name,
-        role: user.role,
+        roles: user.roles,
       },
     });
   },
@@ -88,7 +88,7 @@ export const authUser = {
         404,
       );
     }
-    if (!user.leagues.includes(liga._id) && user.role !== "master") {
+    if (!user.leagues.includes(liga._id) && !user.roles.includes("master")) {
       throw new FastifyError(
         `El usuario ${req.body.username} no tiene acceso a la liga.`,
         404,
@@ -109,7 +109,7 @@ export const authUser = {
         user: user._id,
         league: liga._id,
         username: user.username,
-        role: user.role,
+        roles: user.roles,
       },
       {
         expiresIn: "7d",
@@ -121,7 +121,7 @@ export const authUser = {
       user: {
         id: user._id,
         name: user.name,
-        role: user.role,
+        roles: user.roles,
         league: liga._id,
         nameLiga: liga.name,
         code: liga.code,
@@ -151,7 +151,7 @@ export const authUser = {
       logo: liga?.logo,
       user: {
         name: user?.name,
-        role: user?.role,
+        roles: user?.roles,
         leagues: user?.leagues,
       },
     });
