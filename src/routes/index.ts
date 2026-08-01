@@ -21,7 +21,7 @@ export async function registerRoutes(app: FastifyInstance) {
 
   await app.register(async (leagueApp) => {
     leagueApp.addHook("preHandler", leagueApp.authenticate);
-    leagueApp.addHook("preHandler", authorize("master"));
+    leagueApp.addHook("preHandler", authorize(["master", "admin"]));
 
     await leagueApp.register(leagueRoutes, {
       prefix: "/leagues",

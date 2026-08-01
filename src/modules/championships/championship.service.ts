@@ -1,3 +1,4 @@
+import Debug from "debug";
 import { model, Types } from "mongoose";
 import Match from "@/modules/matchs/service";
 import { Collections } from "@/libs/useful";
@@ -13,6 +14,7 @@ import ChampionshipSchema, {
   ChampionshipModel,
   ChampionshipStage,
 } from "../../models/champions";
+const debug = Debug("src:modules:championships:championship.service");
 
 ChampionshipSchema.plugin(mongooseSmartQuery, {
   defaultFields:
@@ -43,11 +45,19 @@ ChampionshipSchema.pre("deleteOne", { document: true }, async function (this) {
 ChampionshipSchema.methods.generateFixture = async function (
   this: ChampionshipDocument,
 ) {
-  const stage = this.stages.find((s) => s.status === "pendiente");
+  const stage = [...this.stages]
+    .sort((a, b) => a.order - b.order)
+    .find((s) => s.status === "pendiente");
 
   if (!stage) {
     throw new FastifyError("No existen etapas pendientes");
   }
+  debug(
+    "Generando fixture para la etapa:",
+    stage.name,
+    "con modo:",
+    stage.mode,
+  );
 
   return getCompetition(stage.mode).generateFixture(this, stage);
 };

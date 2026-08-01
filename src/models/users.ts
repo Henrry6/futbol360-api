@@ -6,6 +6,7 @@ export enum UserRole {
   MASTER = "master",
   ADMIN = "admin",
   DIRECTIVO = "directivo",
+  OFICIAL = "official",
   PLAYER = "player",
 }
 export interface User {

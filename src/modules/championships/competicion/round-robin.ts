@@ -64,7 +64,7 @@ export async function generateRoundRobinFixture({
         const roundDoc = await createRound(
           championship,
           stage,
-          roundNumber,
+          roundNumber + 1,
           session,
         );
 

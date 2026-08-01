@@ -8,7 +8,6 @@ export async function championsRoutes(app: FastifyInstance) {
     app.register(UpRouter, { Model: Champions });
     app.post("/:id/generate-fixture", cotroller.generateFixture);
     app.delete("/:id/fixtures/:stageId", cotroller.deleteFixture);
-    app.delete("/:id/stages/:stageId/calendar", cotroller.deleteFixture);
     app.get("/:id/table-positions", cotroller.tablePositions);
     // Rutas stages
     app.post("/:id/stages", cotroller.createStage);
