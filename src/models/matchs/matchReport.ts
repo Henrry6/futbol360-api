@@ -174,10 +174,8 @@ const MatchReportSchema = new Schema<MatchReport, VocaliaModel>({
   },
   startTime: Date,
   endTime: Date,
-  referee: { type: SchemaTypes.ObjectId, ref: Collections.REFEREES },
-  assistantReferees: [
-    { type: SchemaTypes.ObjectId, ref: Collections.REFEREES },
-  ],
+  referee: { type: SchemaTypes.ObjectId, ref: Collections.USERS },
+  assistantReferees: [{ type: SchemaTypes.ObjectId, ref: Collections.USERS }],
   vocal: { type: SchemaTypes.ObjectId, ref: Collections.USERS },
   attendance: Number,
   income: Number,

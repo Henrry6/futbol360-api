@@ -122,6 +122,7 @@ export const authUser = {
         id: user._id,
         name: user.name,
         roles: user.roles,
+        official: user.official,
         league: liga._id,
         nameLiga: liga.name,
         code: liga.code,

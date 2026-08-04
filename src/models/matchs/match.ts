@@ -11,6 +11,10 @@ export interface Match {
   localTeam: Types.ObjectId;
   visitorTeam: Types.ObjectId;
   date?: Date;
+  hour?: Date;
+  vocal?: Types.ObjectId;
+  referee: Types.ObjectId;
+  assistantReferees: Types.ObjectId[];
   localGoals?: number;
   visitorGoals?: number;
   status: "programado" | "en_juego" | "finalizado" | "suspendido";
@@ -62,6 +66,11 @@ const Match = new Schema<Match, MatchModel, MatchDocument>({
   },
 
   date: { type: Date },
+  hour: { type: Date },
+  vocal: { type: SchemaTypes.ObjectId, ref: Collections.USERS },
+  referee: { type: SchemaTypes.ObjectId, ref: Collections.USERS },
+  assistantReferees: [{ type: SchemaTypes.ObjectId, ref: Collections.USERS }],
+
   localGoals: { type: Number, default: 0 },
   visitorGoals: { type: Number, default: 0 },
 

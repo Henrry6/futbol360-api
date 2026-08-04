@@ -1,17 +1,10 @@
 import { model } from "mongoose";
+import { msqTemporalOptions } from "@/libs/utils";
 import UserSchema, { User } from "../../models/users";
 import mongooseSmartQuery from "mongoose-smart-query";
-import Liga from "@/modules/leagues/leagues.service";
-import {
-  FastifyError,
-  hashPassword,
-  msqTemporalOptions,
-  sendMail,
-} from "@/libs/utils";
-import { welcomeEmailTemplate } from "@/libs/templates-emails";
 
 UserSchema.plugin(mongooseSmartQuery, {
-  defaultFields: "name username role leagues email",
+  defaultFields: "name username role leagues email official status",
   fieldsForDefaultQuery: "name username",
   ...msqTemporalOptions,
 });

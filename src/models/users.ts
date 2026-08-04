@@ -17,8 +17,11 @@ export interface User {
   password: string;
   roles: ("master" | "admin" | "directivo" | "player" | "official")[];
   official?: {
+    // Árbitro principal
     canReferee: boolean;
+    // Árbitros asistentes (líneas)
     canAssist: boolean;
+    // Vocal responsable del partido
     canBeVocal: boolean;
   };
   leagues: Types.ObjectId[];
@@ -41,6 +44,11 @@ const UserSchema = new Schema<UserDocument>(
         ref: Collections.USERS,
       },
     ],
+    official: {
+      canReferee: { type: Boolean, default: false },
+      canAssist: { type: Boolean, default: false },
+      canBeVocal: { type: Boolean, default: false },
+    },
     status: { type: String, default: "activo" },
     _movements: { type: [Movement] },
   },
