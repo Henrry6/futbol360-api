@@ -6,7 +6,6 @@ import { FastifyError, getMovimiento, msqTemporalOptions } from "@/libs/utils";
 import mongooseSmartQuery from "mongoose-smart-query";
 import MatchReportSchema, {
   MatchReport,
-  VocaliaDocument,
   VocaliaModel,
 } from "../../models/matchs/matchReport";
 const debug = Debug("src:modules:matchReports:service");
@@ -24,8 +23,25 @@ MatchReportSchema.index({
   status: 1,
 });
 
+MatchReportSchema.pre("save", async function (this) {
+  if (this.isNew) {
+    console.log("Vocalia nueva, validando jornada actual...");
+    // const match = await Partidos.findById(this.match).select("status");
+    // if (!match) {
+    //   throw new FastifyError("El partido no existe.");
+    // }
+    // if (match.status === "finalizado") {
+    //   throw new FastifyError(
+    //     "No se puede crear una vocalía para un partido finalizado.",
+    //   );
+    // }
+    // match.status = "en_juego";
+    // match.save();
+  }
+});
+
 MatchReportSchema.methods.finish = async function (
-  status: "finalizado" | "suspendido",
+  status: "finalizada" | "suspendido",
   user: Types.ObjectId,
 ) {
   debug("Finalizando vocalia");
@@ -35,7 +51,7 @@ MatchReportSchema.methods.finish = async function (
   if (!this.endTime) {
     this.endTime = new Date();
   }
-  this.status = "finalizada";
+  this.status = status;
   this._movements.push(
     await getMovimiento({
       user,
@@ -47,7 +63,7 @@ MatchReportSchema.methods.finish = async function (
   await Partidos.updateOne(
     { _id: this.match },
     {
-      status,
+      status: "finalizado",
     },
   );
 };

@@ -10,7 +10,7 @@ export default {
         id: string;
       };
       Body: {
-        status: "finalizado" | "suspendido";
+        status: "finalizada" | "suspendido";
       };
     }>,
     reply: FastifyReply,

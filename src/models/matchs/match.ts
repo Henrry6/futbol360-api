@@ -13,6 +13,7 @@ export interface Match {
   date?: Date;
   hour?: Date;
   vocal?: Types.ObjectId;
+  matchReport?: Types.ObjectId;
   referee: Types.ObjectId;
   assistantReferees: Types.ObjectId[];
   localGoals?: number;
@@ -23,8 +24,8 @@ export interface Match {
 }
 
 export interface MatchMethods {
-  start(vocalId: Types.ObjectId): Promise<Match>;
-  revertStart(): Promise<Match>;
+  // start(vocalId: Types.ObjectId): Promise<Match>;
+  // revertStart(): Promise<Match>;
 }
 export type MatchDocument = HydratedDocument<Match, MatchMethods>;
 
@@ -70,7 +71,7 @@ const Match = new Schema<Match, MatchModel, MatchDocument>({
   vocal: { type: SchemaTypes.ObjectId, ref: Collections.USERS },
   referee: { type: SchemaTypes.ObjectId, ref: Collections.USERS },
   assistantReferees: [{ type: SchemaTypes.ObjectId, ref: Collections.USERS }],
-
+  matchReport: { type: SchemaTypes.ObjectId, ref: Collections.MATCHS_REPORTS },
   localGoals: { type: Number, default: 0 },
   visitorGoals: { type: Number, default: 0 },
 

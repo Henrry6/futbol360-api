@@ -45,6 +45,7 @@ export type TiposMovimiento =
   | "draft"
   | "failed"
   | "finalizado"
+  | "finalizada"
   | "suspendido";
 
 /**

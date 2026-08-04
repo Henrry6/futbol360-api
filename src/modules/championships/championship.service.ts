@@ -80,12 +80,19 @@ ChampionshipSchema.methods.deleteFixture = async function (stageId: string) {
       }
       const roundIds = rounds.map((r) => r._id);
 
+      const existsVocalias = await Match.exists({
+        round: { $in: roundIds },
+      }).session(session);
+      if (existsVocalias) {
+        throw new FastifyError(
+          "No se puede eliminar una etapa que ya tiene vocalías generadas.",
+        );
+      }
       // Validar que no existan partidos jugados
       const existsPlayedMatch = await Match.exists({
         round: { $in: roundIds },
         status: { $in: ["en_juego", "finalizado"] },
       }).session(session);
-
       if (existsPlayedMatch) {
         throw new FastifyError(
           "No se puede eliminar una etapa que ya tiene partidos en juego o finalizados.",

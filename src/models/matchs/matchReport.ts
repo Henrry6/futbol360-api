@@ -126,7 +126,7 @@ const TeamReportSchema = new Schema(
 );
 
 export interface MatchReportMethods {
-  finish(status: "finalizado" | "suspendido", user: string): Promise<void>;
+  finish(status: "finalizada" | "suspendido", user: string): Promise<void>;
 }
 
 export type VocaliaDocument = HydratedDocument<MatchReport, MatchReportMethods>;

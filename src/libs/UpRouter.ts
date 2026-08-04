@@ -19,8 +19,6 @@ export type UpRequest = {
     // campos para filtros
     league?: string | Types.ObjectId;
     _id?: string;
-    startDate?: string;
-    endDate?: string;
   };
   Params: {
     id?: string;
@@ -37,7 +35,7 @@ export type UpRequest = {
   };
 };
 
-const getUserIds = (request: FastifyRequest) => ({
+export const getUserIds = (request: FastifyRequest) => ({
   user: request.payload.user,
   league: request.payload.league ? request.payload.league : undefined,
 });
@@ -175,21 +173,20 @@ export default async function UpRouter(
           prepareRequest(request);
           debug(request.url);
           if (options.pre?.get) await options.pre.get(request);
-          const { startDate, endDate } = request.query as any;
-
-          const prePipeline = [];
-          if (startDate || endDate) {
-            const dateFilter: any = {};
-            if (startDate) dateFilter.$gte = new Date(startDate as string);
-            if (endDate) dateFilter.$lte = new Date(endDate as string);
-            delete request.query.startDate;
-            delete request.query.endDate;
-            prePipeline.push({ $match: { date: dateFilter } });
-          }
+          // const { startDate, endDate } = request.query as any;
+          // const prePipeline = [];
+          // if (startDate || endDate) {
+          //   const dateFilter: any = {};
+          //   if (startDate) dateFilter.$gte = new Date(startDate as string);
+          //   if (endDate) dateFilter.$lte = new Date(endDate as string);
+          //   delete request.query.startDate;
+          //   delete request.query.endDate;
+          //   prePipeline.push({ $match: { date: dateFilter } });
+          // }
           // console.log(request.query, "QUERYYY");
           const [data, total] = await Promise.all([
-            options.Model.smartQuery(request.query, { prePipeline }),
-            options.Model.smartCount(request.query, { prePipeline }),
+            options.Model.smartQuery(request.query),
+            options.Model.smartCount(request.query),
           ]);
           if (options.post?.get) await options.post.get(data, request);
           reply.send({

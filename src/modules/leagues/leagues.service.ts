@@ -1,17 +1,8 @@
-import { model, Types } from "mongoose";
+import { model } from "mongoose";
 import Users from "../users/users.service";
 import mongooseSmartQuery from "mongoose-smart-query";
-import LeagueSchema, {
-  League,
-  LeagueDocument,
-  LigaModel,
-} from "../../models/leagues";
-import {
-  FastifyError,
-  getMovimiento,
-  Movement,
-  msqTemporalOptions,
-} from "@/libs/utils";
+import LeagueSchema, { League, LigaModel } from "../../models/leagues";
+import { FastifyError, getMovimiento, msqTemporalOptions } from "@/libs/utils";
 
 LeagueSchema.plugin(mongooseSmartQuery, {
   defaultFields: "name code status description",
