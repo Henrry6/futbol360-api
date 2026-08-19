@@ -70,7 +70,6 @@ export function prepareRequest(
     }
   }
   if (filter && payload?.league) filter.league = payload.league;
-
   return request;
 }
 

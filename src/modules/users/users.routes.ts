@@ -5,7 +5,8 @@ import cotroller from "@/modules/users/users.controller";
 
 export async function userRoutes(app: FastifyInstance) {
   app.register(async (app) => {
-    app.register(UpRouter, { Model: Users, exclude: ["postOne"] });
+    app.register(UpRouter, { Model: Users, exclude: ["postOne", "putOne"] });
     app.post("", cotroller.createUsers);
+    app.put("/:id", cotroller.updateUser);
   });
 }
