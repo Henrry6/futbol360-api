@@ -4,8 +4,8 @@ import Match from "@/modules/matchs/service";
 import { Collections } from "@/libs/useful";
 import Rounds from "@/modules/rounds/service";
 import { getCompetition } from "./competicion";
-import teamService from "../teams/team.service";
 import mongooseSmartQuery from "mongoose-smart-query";
+import Vocalias from "../matchReports/matchReport.service";
 import { calculateStandings } from "./competicion/standings";
 import { FastifyError, msqTemporalOptions } from "@/libs/utils";
 import ChampionshipSchema, {
@@ -44,21 +44,13 @@ ChampionshipSchema.pre("deleteOne", { document: true }, async function (this) {
 
 ChampionshipSchema.methods.generateFixture = async function (
   this: ChampionshipDocument,
+  etapa: ChampionshipStage,
 ) {
-  const stage = [...this.stages]
-    .sort((a, b) => a.order - b.order)
-    .find((s) => s.status === "pendiente");
-
+  const stage = this.stages.id(etapa._id);
   if (!stage) {
-    throw new FastifyError("No existen etapas pendientes");
+    throw new FastifyError("No se encontró la etapa.");
   }
-  debug(
-    "Generando fixture para la etapa:",
-    stage.name,
-    "con modo:",
-    stage.mode,
-  );
-
+  debug("Generando fixture para:", stage?.name, "con modo:", stage?.mode);
   return getCompetition(stage.mode).generateFixture(this, stage);
 };
 
@@ -80,7 +72,7 @@ ChampionshipSchema.methods.deleteFixture = async function (stageId: string) {
       }
       const roundIds = rounds.map((r) => r._id);
 
-      const existsVocalias = await Match.exists({
+      const existsVocalias = await Vocalias.exists({
         round: { $in: roundIds },
       }).session(session);
       if (existsVocalias) {
@@ -132,9 +124,7 @@ ChampionshipSchema.methods.getCurrentStage = function (
         (s) => s.status === "en_juego" || s.status === "finalizada",
       );
   if (!stage) {
-    throw new FastifyError(
-      "No se encontró la etapa o no existen etapas en juegomon o finalizadas.",
-    );
+    throw new FastifyError("No se encontró la etapa.");
   }
 
   return stage;

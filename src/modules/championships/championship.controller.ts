@@ -1,4 +1,5 @@
 import Debug from "debug";
+import { Types } from "mongoose";
 import { FastifyError } from "@/libs/utils";
 import Round from "@/modules/rounds/service";
 import { FastifyReply, FastifyRequest } from "fastify";
@@ -67,7 +68,10 @@ export interface StageBody {
 export default {
   generateFixture: async (req: FastifyRequest, reply: FastifyReply) => {
     try {
-      const { id } = req.params as { id: string };
+      const { id, stageId } = req.params as {
+        id: string;
+        stageId: string;
+      };
       debug("Generar fixture", id);
       const campeonato = await Campeonato.findOne({
         _id: id,
@@ -76,7 +80,10 @@ export default {
       if (!campeonato) {
         throw new FastifyError("No se encontró el campeonato");
       }
-      await campeonato.generateFixture();
+      const etapa = await campeonato.getCurrentStage(
+        new Types.ObjectId(stageId),
+      );
+      await campeonato.generateFixture(etapa);
       reply.send({
         message: "Fixture generado correctamente",
       });

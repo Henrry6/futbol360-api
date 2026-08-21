@@ -107,7 +107,10 @@ export interface Championship {
 }
 
 export interface ChampionshipMethods {
-  generateFixture(this: ChampionshipDocument): Promise<void>;
+  generateFixture(
+    this: ChampionshipDocument,
+    etapa: ChampionshipStage,
+  ): Promise<void>;
   deleteFixture(this: ChampionshipDocument, etapaId: string): Promise<void>;
   tablePositions(stageId?: Types.ObjectId): Promise<Standing[]>;
   getCurrentStage(stageId?: Types.ObjectId): ChampionshipStage;
