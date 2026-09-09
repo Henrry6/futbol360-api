@@ -30,8 +30,8 @@ export async function registerRoutes(app: FastifyInstance) {
 
   await app.register(async (instance) => {
     instance.addHook("preHandler", instance.authenticate);
-    instance.get("/users/me", authUser.get);
     instance.get("/dashboard", cotroller.getDashboard);
+    instance.get("/users/me", authUser.get);
     await instance.register(userRoutes, {
       prefix: "/users",
     });

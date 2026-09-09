@@ -2,7 +2,6 @@ import Debug from "debug";
 import { Types } from "mongoose";
 import Rounds from "@/modules/rounds/service";
 import Partidos from "@/modules/matchs/service";
-import MatchModel from "@/modules/matchs/service";
 import { MatchDocument } from "@/models/matchs/match";
 import { FastifyReply, FastifyRequest } from "fastify";
 import { FastifyError, getMovimiento } from "@/libs/utils";
@@ -106,7 +105,7 @@ export default {
     reply: FastifyReply,
   ) => {
     const { id } = req.params;
-    const match = await MatchModel.findById(id);
+    const match = await Partidos.findById(id);
     if (!match) {
       throw new FastifyError("Partido no encontrado");
     }
@@ -119,6 +118,11 @@ export default {
     const vocalia = await createReport(match, req.payload.user);
     match.status = "en_juego";
     match.matchReport = vocalia._id;
+    const inicio = await getMovimiento({
+      type: "started",
+      user: req.payload.user,
+    });
+    match._movements.push(inicio);
     await match.save();
     // Poner la jornada en juego si es que estaba pendiente.
     await Rounds.findOneAndUpdate(
@@ -136,7 +140,7 @@ export default {
     reply: FastifyReply,
   ) => {
     const { id } = req.params;
-    const match = await MatchModel.findById(id);
+    const match = await Partidos.findById(id);
     if (!match) {
       throw new FastifyError("Partido no encontrado");
     }

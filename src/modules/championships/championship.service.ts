@@ -68,7 +68,7 @@ ChampionshipSchema.methods.deleteFixture = async function (stageId: string) {
         },
       ).session(session);
       if (rounds.length === 0) {
-        throw new FastifyError("No existen rondas generadas en esa etapa");
+        throw new FastifyError("No existen Jornadas generadas en esa etapa");
       }
       const roundIds = rounds.map((r) => r._id);
 

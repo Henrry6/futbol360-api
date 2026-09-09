@@ -38,6 +38,7 @@ export async function getUsersInfo(
 
 export type TiposMovimiento =
   | "created"
+  | "started"
   | "transferencia"
   | "deleted"
   | "edit"
@@ -66,6 +67,9 @@ export const getMovimiento = async (args: {
     switch (args.type) {
       case "created":
         nota = "Creado";
+        break;
+      case "started":
+        nota = "Iniciado";
         break;
       case "transferencia":
         nota = "Transferido";

@@ -16,7 +16,7 @@ export const authUser = {
     }>,
     reply: FastifyReply,
   ) => {
-    debug("Verificación de login");
+    debug("Verificación de login ADMIN");
     const user = await Users.findOne({
       username: req.body.username,
     }).select("+password");
