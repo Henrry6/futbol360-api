@@ -6,6 +6,7 @@ import { MatchDocument } from "@/models/matchs/match";
 import { FastifyReply, FastifyRequest } from "fastify";
 import { FastifyError, getMovimiento } from "@/libs/utils";
 import matchEventService from "../matchEvents/matchEvent.service";
+import Campeonatos from "@/modules/championships/championship.service";
 import MatchReport from "@/modules/matchReports/matchReport.service";
 const debug = Debug("src:modules:matchs:controller");
 
@@ -62,7 +63,7 @@ async function validateCurrentRound(match: MatchDocument) {
 
   if (!currentRound._id.equals(match.round)) {
     throw new FastifyError(
-      `Debe jugarse primero la jornada ${currentRound.round}.`,
+      `Debe finalizar primero la jornada ${currentRound.round}.`,
     );
   }
 }
@@ -74,7 +75,6 @@ async function validateCanCancel(match: MatchDocument) {
   const eventos = await matchEventService.countDocuments({
     match: match._id,
   });
-
   if (!report) {
     return;
   }
@@ -129,6 +129,23 @@ export default {
       { _id: match.round, status: "pendiente" },
       { status: "en_juego" },
     );
+    // Poner LA ETAPA en juego si es que estaba Generada.
+    await Campeonatos.updateOne(
+      {
+        _id: match.championship,
+        stages: {
+          $elemMatch: {
+            _id: match.stage,
+            status: "generada",
+          },
+        },
+      },
+      {
+        $set: {
+          "stages.$.status": "en_juego",
+        },
+      },
+    );
     reply.send(vocalia);
   },
   revertStart: async (
@@ -144,6 +161,7 @@ export default {
     if (!match) {
       throw new FastifyError("Partido no encontrado");
     }
+    debug("Revirtiendo el informe de la vocalia");
     /**
      * Verificar si el partido ya tiene eventos registrados o si el informe
      * tiene información registrada para poder eliminar la vocalia
@@ -154,6 +172,12 @@ export default {
       match: match._id,
     });
     match.status = "programado";
+    const revert = await getMovimiento({
+      type: "reverted",
+      user: req.payload.user,
+      nota: `Partido revertido a programado`,
+    });
+    match._movements.push(revert);
     await match.save();
     /**
      * Verificar si hay otros partidos en juego en la misma jornada, caso contrario
@@ -169,6 +193,18 @@ export default {
       await Rounds.findByIdAndUpdate(match.round, {
         status: "pendiente",
       });
+      await Campeonatos.updateOne(
+        {
+          _id: match.championship,
+          stages: {
+            $elemMatch: {
+              _id: match.stage,
+              status: "en_juego",
+            },
+          },
+        },
+        { $set: { "stages.$.status": "generada" } },
+      );
     }
     reply.send({
       success: true,

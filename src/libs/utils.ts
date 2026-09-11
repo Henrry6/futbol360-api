@@ -41,6 +41,7 @@ export type TiposMovimiento =
   | "started"
   | "transferencia"
   | "deleted"
+  | "reverted"
   | "edit"
   | "issued"
   | "draft"
@@ -76,6 +77,9 @@ export const getMovimiento = async (args: {
         break;
       case "deleted":
         nota = "Eliminado";
+        break;
+      case "reverted":
+        nota = "Revertido";
         break;
       case "edit":
         nota = "Editado";

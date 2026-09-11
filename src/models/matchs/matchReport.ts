@@ -17,7 +17,8 @@ export interface TeamReport {
 
   // ¿Entregó completos los implementos del camerino?
   dressingRoomEquipment: boolean;
-
+  // Jugadores que participaron en el partido
+  players: Types.ObjectId[];
   // Observaciones particulares del equipo
   observations?: string;
 }
@@ -116,7 +117,7 @@ const TeamReportSchema = new Schema(
       type: Boolean,
       default: false,
     },
-
+    players: [Types.ObjectId],
     // Observaciones del equipo
     observations: String,
   },

@@ -4,6 +4,7 @@ import Match from "@/modules/matchs/service";
 import { Collections } from "@/libs/useful";
 import Rounds from "@/modules/rounds/service";
 import { getCompetition } from "./competicion";
+import Players from "../players/player.service";
 import mongooseSmartQuery from "mongoose-smart-query";
 import Vocalias from "../matchReports/matchReport.service";
 import { calculateStandings } from "./competicion/standings";
@@ -21,6 +22,26 @@ ChampionshipSchema.plugin(mongooseSmartQuery, {
     "name league category { name } teams stages currentStage champion runnerUp thirdPlace status observations",
   fieldsForDefaultQuery: "name code",
   ...msqTemporalOptions,
+});
+ChampionshipSchema.pre("save", { document: true }, async function () {
+  const campeonato = this;
+
+  const equiposActivos = campeonato.teams.filter(
+    (team) => team.status === "activo",
+  );
+
+  for (const equipo of equiposActivos) {
+    const jugadoresActivos = await Players.countDocuments({
+      team: equipo.team,
+      status: "activo",
+    });
+
+    if (jugadoresActivos < 15) {
+      throw new Error(
+        `El equipo ${equipo.team} debe tener al menos 15 jugadores activos. Actualmente tiene ${jugadoresActivos}.`,
+      );
+    }
+  }
 });
 
 ChampionshipSchema.pre("deleteOne", { document: true }, async function (this) {
