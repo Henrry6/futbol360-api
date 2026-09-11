@@ -39,7 +39,7 @@ async function updateMatchScore(matchId: Types.ObjectId) {
   );
 }
 MatchEventSchema.plugin(mongooseSmartQuery, {
-  defaultFields: "round stage championship player minute type observations",
+  defaultFields: "player minute type observations team",
   fieldsForDefaultQuery: "observations type player",
   ...msqTemporalOptions,
 });
@@ -58,7 +58,7 @@ MatchEventSchema.pre("validate", async function (this) {
 
   if (report.status === "finalizada") {
     throw new FastifyError(
-      "La vocalía ya fue finalizada y no permite registrar eventos.",
+      "La vocalía ya fue finalizada por lo que ya no se permite actualizar.",
     );
   }
 });

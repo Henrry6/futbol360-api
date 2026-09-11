@@ -4,7 +4,7 @@ import PlayerSchema, { Player } from "../../models/players";
 import mongooseSmartQuery from "mongoose-smart-query";
 
 PlayerSchema.plugin(mongooseSmartQuery, {
-  defaultFields: "names league cedula lastName status",
+  defaultFields: "names league cedula lastName status jerseyNumber",
   fieldsForDefaultQuery: "names cedula lastName",
   ...msqTemporalOptions,
 });

@@ -86,8 +86,7 @@ async function validateCanCancel(match: MatchDocument) {
     report.refereeReport ||
     report.vocalReport ||
     report.observations ||
-    report.income ||
-    report.attendance
+    report.income
   ) {
     throw new FastifyError(
       "No se puede cancelar un partido que ya tiene información registrada.",

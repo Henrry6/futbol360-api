@@ -58,10 +58,6 @@ export interface MatchReport {
 
   // Vocal responsable del partido
   vocal: Types.ObjectId;
-
-  // Cantidad de asistentes al partido
-  attendance?: number;
-
   // Valor recaudado por concepto de entradas
   income?: number;
 
@@ -127,7 +123,7 @@ const TeamReportSchema = new Schema(
 );
 
 export interface MatchReportMethods {
-  finish(status: "finalizada" | "suspendido", user: string): Promise<void>;
+  finish(status: "finalizado" | "suspendido", user: string): Promise<void>;
 }
 
 export type VocaliaDocument = HydratedDocument<MatchReport, MatchReportMethods>;
@@ -178,7 +174,6 @@ const MatchReportSchema = new Schema<MatchReport, VocaliaModel>({
   referee: { type: SchemaTypes.ObjectId, ref: Collections.USERS },
   assistantReferees: [{ type: SchemaTypes.ObjectId, ref: Collections.USERS }],
   vocal: { type: SchemaTypes.ObjectId, ref: Collections.USERS },
-  attendance: Number,
   income: Number,
   refereeRating: {
     type: String,
