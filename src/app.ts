@@ -4,6 +4,7 @@ import jwtPlugin from "./plugins/jwt";
 import authPlugin from "./plugins/auth";
 import { registerRoutes } from "./routes";
 import mailerPlugin from "./plugins/emails";
+import uploadPlugin from "./plugins/upload";
 import { registerCors } from "./plugins/cors";
 import { registerSwagger } from "./plugins/swagger";
 
@@ -16,6 +17,7 @@ export async function buildApp() {
   Debug.enable("src:*");
   await registerCors(app);
   await registerSwagger(app);
+  await app.register(uploadPlugin);
   await app.register(authPlugin);
   await app.register(jwtPlugin);
   await app.register(mailerPlugin);

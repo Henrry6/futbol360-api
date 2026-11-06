@@ -1,7 +1,12 @@
+import Debug from "debug";
 import Vocalias from "./matchReport.service";
+import Rounds from "@/modules/rounds/service";
 import Partidos from "@/modules/matchs/service";
+import Campeonato from "@/modules/championships/championship.service";
 import { FastifyReply, FastifyRequest } from "fastify";
 import { deepmerge, FastifyError, getMovimiento } from "@/libs/utils";
+
+const debug = Debug("src:modules:matchsReports:controller");
 
 export const actualizarVocalia = async (
   request: FastifyRequest<{
@@ -71,6 +76,31 @@ export default {
         $push: { _movements: movimiento },
       },
     );
+    const partidosPendientes = await Partidos.countDocuments({
+      round: vocalia.round,
+      status: { $nin: ["finalizado", "suspendido"] },
+    });
+
+    if (partidosPendientes === 0) {
+      debug("Finalizando la jornada");
+      await Rounds.findByIdAndUpdate(vocalia.round, {
+        status: "finalizado",
+      });
+
+      // Verificar si con esto también se completó la etapa
+      const rondasPendientes = await Rounds.countDocuments({
+        stage: vocalia.stage,
+        status: { $ne: "finalizado" },
+      });
+
+      if (rondasPendientes === 0) {
+        debug("Finalizando la etapa");
+        await Campeonato.updateOne(
+          { _id: vocalia.championship, "stages._id": vocalia.stage },
+          { $set: { "stages.$.status": "finalizada" } },
+        );
+      }
+    }
     reply.send("Vocalia finalizada");
   },
   actualizarVocalia,

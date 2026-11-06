@@ -36,11 +36,11 @@ ChampionshipSchema.pre("save", { document: true }, async function () {
       status: "activo",
     });
 
-    if (jugadoresActivos < 15) {
-      throw new Error(
-        `El equipo ${equipo.team} debe tener al menos 15 jugadores activos. Actualmente tiene ${jugadoresActivos}.`,
-      );
-    }
+    // if (jugadoresActivos < 15) {
+    //   throw new Error(
+    //     `El equipo ${equipo.team} debe tener al menos 15 jugadores activos. Actualmente tiene ${jugadoresActivos}.`,
+    //   );
+    // }
   }
 });
 

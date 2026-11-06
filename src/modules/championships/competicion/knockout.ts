@@ -20,10 +20,17 @@ export function validateStage(
   }
 }
 
-export async function generateKnockout(
-  championship: ChampionshipDocument,
-  stage: ChampionshipStage,
-) {
+interface KnockoutFixtureOptions {
+  championship: ChampionshipDocument;
+  stage: ChampionshipStage;
+}
+
+export async function generateKnockout({
+  championship,
+  stage,
+}: KnockoutFixtureOptions) {
+  validateStage(championship, stage);
+
   //2. Obtener la etapa anterior
   const previousStage = championship.stages.find(
     (s) => s.order === stage.order - 1,
@@ -74,7 +81,15 @@ export async function generateKnockout(
   }
 }
 
-export async function generateFixture() {}
+export async function generateFixture(
+  championship: ChampionshipDocument,
+  stage: ChampionshipStage,
+) {
+  return generateKnockout({
+    championship,
+    stage,
+  });
+}
 
 export async function nextRound() {}
 

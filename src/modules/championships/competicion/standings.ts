@@ -414,7 +414,7 @@ export async function calculateStandings(
   const matches = await Partidos.find({
     championship: championship._id,
     stage: stage._id,
-    status: "finalizado",
+    status: { $in: ["en_juego", "finalizado", "suspendido"] },
   });
 
   const standings = new Map<string, Standing>();
