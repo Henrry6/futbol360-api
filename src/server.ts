@@ -1,5 +1,5 @@
-import { buildApp } from "./app";
 import { env } from "./config/env";
+import { buildApp } from "./app";
 // import { seedMaster } from "./seed";
 import { connectDatabase } from "./config/database";
 

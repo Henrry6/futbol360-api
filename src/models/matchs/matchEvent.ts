@@ -13,8 +13,6 @@ import { Schema, SchemaTypes, Types } from "mongoose";
 
 export type MatchEventType =
   | "gol"
-  | "autogol"
-  | "gol_penal"
   | "penal_fallado"
   | "tarjeta_amarilla"
   | "tarjeta_roja"
