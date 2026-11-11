@@ -39,7 +39,7 @@ async function updateMatchScore(matchId: Types.ObjectId) {
   );
 }
 MatchEventSchema.plugin(mongooseSmartQuery, {
-  defaultFields: "player minute type observations team",
+  defaultFields: "player minute type observations team playerIn playerOut",
   fieldsForDefaultQuery: "observations type player",
   ...msqTemporalOptions,
 });

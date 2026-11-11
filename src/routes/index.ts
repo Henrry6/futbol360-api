@@ -13,12 +13,30 @@ import { categoryRoutes } from "@/modules/categories/category.routes";
 import { matchReportRoutes } from "@/modules/matchReports/matchReport.routes";
 import { matchEventRoutes } from "@/modules/matchEvents/matchEvent.routes";
 import { championsRoutes } from "@/modules/championships/championship.routes";
+import mongoose from "mongoose";
+const dbStates: Record<number, string> = {
+  0: "desconectada",
+  1: "conectada",
+  2: "conectando",
+  3: "desconectando",
+};
 
 export async function registerRoutes(app: FastifyInstance) {
+  app.get("/health", async (_request, reply) => {
+    const state = mongoose.connection.readyState;
+    const dbConnected = state === 1;
+
+    return reply.status(dbConnected ? 200 : 503).send({
+      status: dbConnected ? "ok" : "error",
+      database: dbStates[state] ?? "desconocido",
+      uptime: Math.round(process.uptime()),
+      timestamp: new Date().toISOString(),
+    });
+  });
+
   await app.register(authRoutes, {
     prefix: "/auth",
   });
-
   await app.register(async (leagueApp) => {
     leagueApp.addHook("preHandler", leagueApp.authenticate);
     leagueApp.addHook("preHandler", authorize(["master", "admin"]));
