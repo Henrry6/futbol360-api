@@ -31,8 +31,10 @@ export default fp(async (app: FastifyInstance) => {
       },
     });
 
-    await transporter.verify();
-
+    transporter
+      .verify()
+      .then(() => app.log.info("SMTP listo"))
+      .catch((err) => app.log.warn({ err }, "SMTP no disponible"));
     console.log("SMTP conectado correctamente");
 
     app.decorate("mailer", {
