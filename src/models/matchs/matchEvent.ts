@@ -13,7 +13,6 @@ import { Schema, SchemaTypes, Types } from "mongoose";
 
 export type MatchEventType =
   | "gol"
-  | "penal_fallado"
   | "tarjeta_amarilla"
   | "tarjeta_roja"
   | "cambio";
@@ -120,15 +119,7 @@ const MatchEventSchema = new Schema<MatchEvent>({
   type: {
     type: String,
     required: true,
-    enum: [
-      "gol",
-      "autogol",
-      "gol_penal",
-      "penal_fallado",
-      "tarjeta_amarilla",
-      "tarjeta_roja",
-      "cambio",
-    ],
+    enum: ["gol", "tarjeta_amarilla", "tarjeta_roja", "cambio"],
   },
 
   playerIn: {

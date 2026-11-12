@@ -184,6 +184,34 @@ export default {
       message: "Etapa actualizada correctamente",
     });
   },
+  /**
+   * Reintenta el avance automático de una etapa (siguiente ronda knockout,
+   * cierre de etapa y de campeonato). Útil si el avance automático falló al
+   * cerrar la última vocalía de una jornada.
+   */
+  advanceStage: async (req: FastifyRequest, reply: FastifyReply) => {
+    const { id, stageId } = req.params as { id: string; stageId: string };
+    const championship = await Campeonato.findOne({
+      _id: id,
+      league: req.payload.league,
+    });
+    if (!championship) {
+      throw new FastifyError("No se encontró el campeonato");
+    }
+    const stage = championship.stages.id(stageId);
+    if (!stage) {
+      throw new FastifyError("No se encontró la etapa");
+    }
+    const lastRound = await Round.findOne({
+      championship: championship._id,
+      stage: stage._id,
+    }).sort({ round: -1 });
+    if (!lastRound) {
+      throw new FastifyError("La etapa no tiene jornadas generadas");
+    }
+    await championship.afterRoundFinished(lastRound._id);
+    reply.send({ message: "Etapa actualizada correctamente" });
+  },
   deleteStage: async (req: FastifyRequest, reply: FastifyReply) => {
     const { id, stageId } = req.params as {
       id: string;

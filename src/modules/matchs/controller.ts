@@ -104,7 +104,10 @@ export default {
     reply: FastifyReply,
   ) => {
     const { id } = req.params;
-    const match = await Partidos.findById(id);
+    const match = await Partidos.findOne({
+      _id: id,
+      league: req.payload.league,
+    });
     if (!match) {
       throw new FastifyError("Partido no encontrado");
     }
@@ -156,7 +159,10 @@ export default {
     reply: FastifyReply,
   ) => {
     const { id } = req.params;
-    const match = await Partidos.findById(id);
+    const match = await Partidos.findOne({
+      _id: id,
+      league: req.payload.league,
+    });
     if (!match) {
       throw new FastifyError("Partido no encontrado");
     }

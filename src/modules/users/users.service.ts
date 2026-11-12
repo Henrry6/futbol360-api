@@ -4,7 +4,9 @@ import UserSchema, { User } from "../../models/users";
 import mongooseSmartQuery from "mongoose-smart-query";
 
 UserSchema.plugin(mongooseSmartQuery, {
-  defaultFields: "name username role leagues email official status",
+  defaultFields: "name username roles leagues email official status",
+  // smartQuery usa agregaciones, que ignoran `select: false`
+  protectedFields: "password",
   fieldsForDefaultQuery: "name username",
   ...msqTemporalOptions,
 });

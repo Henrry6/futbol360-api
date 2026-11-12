@@ -18,7 +18,7 @@ export async function seedMaster() {
       username: "master",
       email: "admin@futbol360.com",
       password: await hashPassword("123456"),
-      role: "master",
+      roles: ["master"],
     });
     console.log("MASTER creado");
   } catch (error) {

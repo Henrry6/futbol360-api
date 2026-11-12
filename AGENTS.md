@@ -24,8 +24,14 @@ Lee `SPEC.md` y la spec de la tarea antes de escribir código.
 - `npm run build` — compila a `dist/` (`tsc && tsc-alias`)
 - `npm start` — ejecuta `dist/server.js`
 - `npx tsc --noEmit` — chequeo de tipos rápido
-- No hay tests ni linter configurados.
-- Antes de dar una tarea por terminada: `npm run build` debe pasar sin errores.
+- `npm run simulate` — simulador end-to-end de competiciones (`scripts/simulate-competitions.ts`):
+  crea campeonatos en una base temporal `futbol360_simulacion` (se borra sola), juega todas
+  las etapas por HTTP y verifica fixture, tablas, llaves, clasificados y campeón.
+  Opciones: `-- --seed N`, `-- --quiet`. Requiere Node ≥ 20 y MongoDB en replica set.
+- No hay tests unitarios ni linter configurados.
+- Usa **Node ≥ 20** (Fastify 5); el Node 16 por defecto del sistema no sirve (`nvm use 22`).
+- Antes de dar una tarea por terminada: `npm run build` debe pasar sin errores; si tocaste
+  `modules/championships/competicion/`, `matchs` o `matchReports`, también `npm run simulate`.
 - Swagger UI en `/docs`. Health check en `GET /health` (estado de Mongo y uptime).
 
 ## Arranque (`src/server.ts`)

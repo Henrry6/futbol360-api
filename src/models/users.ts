@@ -35,13 +35,13 @@ const UserSchema = new Schema<UserDocument>(
   {
     name: { type: String, required: true },
     username: { type: String, required: true, unique: true },
-    password: { type: String, required: true },
+    password: { type: String, required: true, select: false },
     email: { type: String, required: true, unique: true },
     roles: { type: [String], enum: Object.values(UserRole), required: true },
     leagues: [
       {
         type: SchemaTypes.ObjectId,
-        ref: Collections.USERS,
+        ref: Collections.LEAGUES,
       },
     ],
     official: {
@@ -54,6 +54,14 @@ const UserSchema = new Schema<UserDocument>(
   },
   {
     timestamps: true,
+    // Nunca serializar el hash al responder (reply.send usa toJSON).
+    // toObject() no se modifica: users.controller lo usa para el deepmerge.
+    toJSON: {
+      transform: (_doc, ret: Record<string, unknown>) => {
+        delete ret.password;
+        return ret;
+      },
+    },
   },
 );
 

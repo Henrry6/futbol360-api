@@ -14,5 +14,6 @@ export async function championsRoutes(app: FastifyInstance) {
     app.get("/:id/stages", cotroller.getStages);
     app.put("/:id/stages/:stageId", cotroller.updateStage);
     app.delete("/:id/stages/:stageId", cotroller.deleteStage);
+    app.post("/:id/stages/:stageId/advance", cotroller.advanceStage);
   });
 }

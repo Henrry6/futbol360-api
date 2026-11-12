@@ -7,7 +7,7 @@
 > los agentes lo leen pero no deben tomarlo como requisito cerrado.
 
 ## 1. Visión
-[CONFIRMAR] Plataforma para que ligas de fútbol amateur gestionen sus campeonatos: categorías,
+Plataforma para que ligas de fútbol amateur gestionen sus campeonatos: categorías,
 equipos, jugadores, generación automática de fixture, vocalía (acta) de cada partido con sus
 eventos (goles, tarjetas, cambios) y tabla de posiciones.
 Es **multi-liga**: cada liga tiene un `code` con el que sus usuarios inician sesión, y todos los
@@ -19,12 +19,12 @@ a varias ligas (`leagues[]`).
 
 | Rol | Valor | Qué puede hacer hoy (según el código) |
 |---|---|---|
-| Visitante | — | Nada: no hay endpoints públicos salvo `/`, `/health` y login. [CONFIRMAR] si habrá vista pública de resultados/tablas |
+| Visitante | — | Nada: no hay endpoints públicos salvo `/`, `/health` y login.  si habrá vista pública de resultados/tablas, para que cualquiera pueda visualizar |
 | Master | `master` | Superadministrador. Único que entra por `/auth/admin/login`. Gestiona ligas. Puede entrar a cualquier liga |
 | Administrador | `admin` | Administra su liga. Puede gestionar `/leagues` |
-| Directivo | `directivo` | [CONFIRMAR] permisos; hoy tiene el mismo acceso que cualquier usuario autenticado |
+| Directivo | `directivo` | permisos; hoy tiene el mismo acceso que cualquier usuario autenticado, pero a futuro esta por implementar que los directivos sean quienes crean campeonatos, cetegorias, equipos y jugadores, como tambien gestionar los partidos y vocalias. |
 | Oficial | `official` | Árbitro / asistente / vocal según flags `official.canReferee`, `canAssist`, `canBeVocal` |
-| Jugador | `player` | [CONFIRMAR] permisos; hoy igual que cualquier autenticado |
+| Jugador | `player` | SOlo deberia poder registrarse, en un equipo, cuando un directivo cree un enlace en el que cada jugador se vaya registrando en el equipo |
 
 > Hoy solo `/leagues` está restringido por rol (`master`, `admin`). El resto de rutas solo exige JWT.
 
@@ -202,16 +202,15 @@ Revisado en `futbol360-app` el 2026-11-12. Todas requieren JWT salvo el login.
 ## 7. Requisitos no funcionales
 - Responsive: layout con `Drawer` en móvil (antd `useBreakpoint`, corte en `lg`)
 - Node ≥ 20 para la app (Next 16)
-- [CONFIRMAR] moneda y formato: la app formatea con `es-MX` / `MXN` (`app/assets/utils.tsx`)
-- Imágenes ≤ 5 MB (límite de multipart). [CONFIRMAR] formatos permitidos: jpg/png/webp (hoy no se valida el tipo)
+-  moneda y formato: la app formatea con `es-ES` / `USD` (`app/assets/utils.tsx`)
+- Imágenes ≤ 5 MB (límite de multipart). formatos permitidos: jpg/png/webp Todos los formatos,mas comunes
 - Imágenes servidas desde Cloudinary, carpeta `futbol360/teams` y `futbol360/players`
 - MongoDB en replica set (transacciones en fixture y sesiones)
 - Mensajes al usuario en español
-- [CONFIRMAR] responsive / móvil primero, rendimiento, accesibilidad
+- Siempre quede responsive / móvil primero, rendimiento, accesibilidad
 
 ## 8. Fuera de alcance (por ahora)
-- [CONFIRMAR] Registro público de usuarios (hoy los usuarios los crea un admin; no existe `/auth/register`)
-- [CONFIRMAR] pagos, apuestas, streaming
+-  Registro público de usuarios (hoy los usuarios los crea un admin; no existe `/auth/register`) asi esta correcto solo un admin crear usuarios
 
 ## 9. Decisiones tomadas
 - 2026-11-12 — `SPEC.md` y `specs/` viven en `futbol360-api` y son la fuente única de contexto para API y app. La app los referencia como `../futbol360-api/` (ambos repos son carpetas hermanas).
@@ -222,20 +221,6 @@ Revisado en `futbol360-app` el 2026-11-12. Todas requieren JWT salvo el login.
 - (Inferida del código) Auditoría con `_movements` en lugar de timestamps en la mayoría de modelos.
 - Pendiente: ¿Zod (ya instalado) o JSON Schema de Fastify para validar endpoints nuevos?
 
-## 10. Deuda técnica / inconsistencias detectadas (2026-11-12)
-Cada punto debería convertirse en su propia spec antes de arreglarse.
-1. `seed.ts` crea el master con `role: "master"`, pero el campo es `roles` (array).
-2. `User.leagues` tiene `ref: Collections.USERS`; debería ser `LEAGUES`.
-3. Users: `defaultFields` y `GET /users/me` seleccionan `role` (no existe) en vez de `roles` → `/users/me` no devuelve roles.
-4. `password` no tiene `select: false`; `POST /users` y `PUT /users/:id` devuelven el documento con el hash.
-5. `startMatch`, `revertStart` y los endpoints de `matchReports` buscan por `_id` sin filtrar por `league`.
-6. El marcador solo cuenta eventos `gol`; `autogol` y `gol_penal` no suman (y el tipo TS `MatchEventType` no los incluye).
-7. Contraseña incorrecta lanza `Error` genérico → responde 500 en vez de 401.
-8. Modo `groups` sin implementar; `nextRound` / `finishChampionship` vacíos (no se asignan campeón/subcampeón).
-9. Validación de mínimo de jugadores por equipo en campeonato comentada (`championship.service.ts`).
-10. Subida de imágenes no valida el tipo de archivo.
-11. `auth.service.ts` (`login`) no se usa.
-12. El token de `/auth/admin/login` no lleva `league`; las rutas que filtran por liga (incluida `/users/me`) no están pensadas para ese token.
 
 **App ↔ API**
 13. La app llama `GET /dashboard/admin/statics` (`app/(admin)/home/page.tsx`), que no existe en la API.

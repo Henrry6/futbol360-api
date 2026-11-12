@@ -18,7 +18,24 @@ export interface ChampionshipStage {
   // Para eliminación directa
   thirdPlaceMatch?: boolean;
   participants?: number;
+
+  // Solo para grupos: composición de cada grupo, se guarda al generar el fixture
+  // para que la tabla y los clasificados no dependan de un nuevo sorteo.
+  groupsTeams?: ChampionshipGroup[];
 }
+
+export interface ChampionshipGroup {
+  name: string; // "A", "B", "C"...
+  teams: Types.ObjectId[];
+}
+
+const ChampionshipGroupSchema = new Schema<ChampionshipGroup>(
+  {
+    name: { type: String, required: true },
+    teams: [{ type: SchemaTypes.ObjectId, ref: Collections.TEAMS }],
+  },
+  { _id: false },
+);
 
 const ChampionshipStageSchema = new Schema<ChampionshipStage>({
   order: { type: Number, required: true },
@@ -37,6 +54,7 @@ const ChampionshipStageSchema = new Schema<ChampionshipStage>({
   participants: { type: Number },
   qualifyTeams: { type: Number },
   thirdPlaceMatch: { type: Boolean },
+  groupsTeams: { type: [ChampionshipGroupSchema], default: undefined },
 });
 
 export interface ChampionshipTeam {
@@ -114,8 +132,17 @@ export interface ChampionshipMethods {
   deleteFixture(this: ChampionshipDocument, etapaId: string): Promise<void>;
   tablePositions(stageId?: Types.ObjectId): Promise<Standing[]>;
   getCurrentStage(stageId?: Types.ObjectId): ChampionshipStage;
-  calculateStandings(): Promise<void>;
-  nextRound(): Promise<void>;
+  /**
+   * Genera la siguiente ronda de la etapa si el modo lo requiere (knockout).
+   * Devuelve true si se creó una ronda nueva.
+   */
+  nextRound(stageId: Types.ObjectId | string): Promise<boolean>;
+  /**
+   * Se llama cuando una jornada termina: genera la siguiente ronda
+   * (knockout), o cierra la etapa y, si era la última, el campeonato.
+   */
+  afterRoundFinished(roundId: Types.ObjectId | string): Promise<void>;
+  /** Asigna campeón, subcampeón y tercer lugar y finaliza el campeonato. */
   finishChampionship(): Promise<void>;
 }
 

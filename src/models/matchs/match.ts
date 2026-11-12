@@ -18,6 +18,16 @@ export interface Match {
   assistantReferees: Types.ObjectId[];
   localGoals?: number;
   visitorGoals?: number;
+  // Penales: solo para definir un empate en eliminación directa
+  localPenalties?: number;
+  visitorPenalties?: number;
+  // Grupo al que pertenece el partido (modo "groups")
+  group?: string;
+  // Posición del cruce dentro de la llave (modo "knockout"): 1, 2, 3...
+  // Los ganadores de los cruces 1 y 2 se enfrentan en la siguiente ronda, etc.
+  bracketPosition?: number;
+  // Partido por el tercer lugar (modo "knockout" con thirdPlaceMatch)
+  isThirdPlaceMatch?: boolean;
   status: "programado" | "en_juego" | "finalizado" | "suspendido";
   observations?: string;
   _movements: Movement[];
@@ -74,6 +84,11 @@ const Match = new Schema<Match, MatchModel, MatchDocument>({
   matchReport: { type: SchemaTypes.ObjectId, ref: Collections.MATCHS_REPORTS },
   localGoals: { type: Number, default: 0 },
   visitorGoals: { type: Number, default: 0 },
+  localPenalties: { type: Number, min: 0 },
+  visitorPenalties: { type: Number, min: 0 },
+  group: { type: String },
+  bracketPosition: { type: Number },
+  isThirdPlaceMatch: { type: Boolean },
 
   status: {
     type: String,

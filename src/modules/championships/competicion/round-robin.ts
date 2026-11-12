@@ -1,107 +1,102 @@
 // round-robin.ts
-// Generar jornadas todos contra todos
-import mongoose from "mongoose";
-import { getStageParticipants } from "./particpants";
+// Liga: todos contra todos a una vuelta. También lo usa round-robin-double.ts.
+//
+// Ejemplo: 10 equipos → 9 jornadas de 5 partidos = 45 partidos.
+//          9 equipos  → 9 jornadas de 4 partidos (un equipo descansa por jornada).
+
+import { ClientSession } from "mongoose";
+import { FastifyError } from "@/libs/utils";
 import { ChampionshipDocument, ChampionshipStage } from "@/models/champions";
-import { createMatches, createRound, prepareTeams, rotate } from "./helpers";
+import { calculateStandings } from "./standings";
+import {
+  createMatches,
+  createRound,
+  roundRobinSchedule,
+  shuffle,
+  withReturnLeg,
+} from "./helpers";
+import { Podium, Qualifiers, Seed } from "./types";
 
-interface GenerateRoundRobinFixtureOptions {
-  championship: ChampionshipDocument;
-  stage: ChampionshipStage;
-  legs: 1 | 2;
-}
-function validateStage(
-  championship: ChampionshipDocument,
-  stage: ChampionshipStage,
-) {
+export function validate(stage: ChampionshipStage, participants: Seed[]) {
   if (!stage.participants) {
-    throw new Error("Debe indicar la cantidad de participantes.");
+    throw new FastifyError("Debe indicar la cantidad de participantes.");
   }
-  if (championship.teams.length < 2) {
-    throw new Error("Debe existir al menos dos equipos");
-  }
-
-  if (stage.participants && championship.teams.length !== stage.participants) {
-    throw new Error(`La etapa requiere ${stage.participants} equipos.`);
-  }
-  if (stage.qualifyTeams && stage.qualifyTeams >= stage.participants) {
-    throw new Error(
-      "Los clasificados deben ser menores que los participantes.",
+  if (participants.length !== stage.participants) {
+    throw new FastifyError(
+      `La etapa requiere ${stage.participants} equipos y hay ${participants.length} disponibles.`,
     );
   }
-
-  if (stage.status !== "pendiente") {
-    throw new Error("La etapa ya fue generada.");
+  if (participants.length < 2) {
+    throw new FastifyError("Debe existir al menos dos equipos.");
+  }
+  if (stage.qualifyTeams && stage.qualifyTeams >= stage.participants) {
+    throw new FastifyError(
+      "Los clasificados deben ser menos que los participantes.",
+    );
   }
 }
 
-export async function generateRoundRobinFixture({
-  championship,
-  stage,
-  legs,
-}: GenerateRoundRobinFixtureOptions) {
-  validateStage(championship, stage);
-
-  const participants = await getStageParticipants(championship, stage);
-
-  const teams = prepareTeams(participants);
-
-  const roundsPerLeg = teams.length - 1;
-
-  const matchesPerRound = teams.length / 2;
-
-  const session = await mongoose.startSession();
-
-  try {
-    session.startTransaction();
-
-    for (let leg = 0; leg < legs; leg++) {
-      let rotation = [...teams];
-
-      for (let round = 0; round < roundsPerLeg; round++) {
-        const roundNumber = leg * roundsPerLeg + round;
-
-        const roundDoc = await createRound(
-          championship,
-          stage,
-          roundNumber + 1,
-          session,
-        );
-
-        await createMatches(
-          championship,
-          roundDoc._id,
-          stage,
-          rotation,
-          matchesPerRound,
-          leg === 1, // true = invertir localía
-          session,
-        );
-
-        rotation = rotate(rotation);
-      }
-    }
-
-    stage.status = "generada";
-
-    await championship.save({ session });
-
-    await session.commitTransaction();
-  } catch (error) {
-    await session.abortTransaction();
-    throw error;
-  } finally {
-    session.endSession();
-  }
-}
-
-export async function generateFixture(
+export async function generateRoundRobin(
   championship: ChampionshipDocument,
   stage: ChampionshipStage,
+  participants: Qualifiers,
+  session: ClientSession,
+  legs: 1 | 2,
 ) {
-  return generateRoundRobinFixture({
-    championship,
-    stage,
-    legs: 1,
-  });
+  // El orden del círculo define el calendario: se sortea siempre.
+  const teams = shuffle(participants.seeds.map((s) => s.team));
+  const firstLeg = roundRobinSchedule(teams);
+  const schedule = legs === 2 ? withReturnLeg(firstLeg) : firstLeg;
+
+  for (const [index, matches] of schedule.entries()) {
+    const round = await createRound(championship, stage, index + 1, session);
+    await createMatches(
+      championship,
+      stage,
+      round._id,
+      matches.map(([localTeam, visitorTeam]) => ({ localTeam, visitorTeam })),
+      session,
+    );
+  }
+}
+
+export function generateFixture(
+  championship: ChampionshipDocument,
+  stage: ChampionshipStage,
+  participants: Qualifiers,
+  session: ClientSession,
+) {
+  return generateRoundRobin(championship, stage, participants, session, 1);
+}
+
+/** Todas las jornadas se crean al generar el fixture: no hay rondas extra. */
+export async function nextRound() {
+  return false;
+}
+
+/** Clasifican los primeros `qualifyTeams` de la tabla, en orden de posición. */
+export async function getQualifiers(
+  championship: ChampionshipDocument,
+  stage: ChampionshipStage,
+): Promise<Qualifiers> {
+  const standings = await calculateStandings(championship, stage);
+  return {
+    seeds: standings
+      .slice(0, stage.qualifyTeams ?? 0)
+      .map((row) => ({ team: row.team })),
+    ordering: "ranked",
+  };
+}
+
+/** Si la liga es la última etapa: 1º campeón, 2º subcampeón, 3º tercero. */
+export async function getPodium(
+  championship: ChampionshipDocument,
+  stage: ChampionshipStage,
+): Promise<Podium> {
+  const [first, second, third] = await calculateStandings(championship, stage);
+  return {
+    champion: first?.team,
+    runnerUp: second?.team,
+    thirdPlace: third?.team,
+  };
 }

@@ -40,7 +40,7 @@ export const authUser = {
     }
     const isValid = await comparePassword(req.body.password, user.password);
     if (!isValid) {
-      throw new Error("Usuario o contraseña incorrectos");
+      throw new FastifyError("Usuario o contraseña incorrectos", 401);
     }
     const token = await req.server.jwt.sign(
       {
@@ -102,7 +102,7 @@ export const authUser = {
     }
     const isValid = await comparePassword(req.body.password, user.password);
     if (!isValid) {
-      throw new Error("Usuario o contraseña incorrectos");
+      throw new FastifyError("Usuario o contraseña incorrectos", 401);
     }
     const token = await req.server.jwt.sign(
       {
@@ -135,7 +135,7 @@ export const authUser = {
     const [user, liga] = await Promise.all([
       Users.findOne(
         { leagues, _id: request.payload.user },
-        "name role leagues",
+        "name roles leagues",
       ),
       Leagues.findOne({ _id: leagues }, "name code logo status"),
     ]);
