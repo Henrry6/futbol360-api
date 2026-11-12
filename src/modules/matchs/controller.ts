@@ -216,4 +216,127 @@ export default {
       data: match,
     });
   },
+  /**
+   * Registra o corrige los penales de un partido de eliminación directa que ya
+   * terminó empatado (por ejemplo, partidos cerrados antes de que la vocalía
+   * exigiera penales).
+   *
+   * Reglas:
+   * - Solo etapas knockout, partido finalizado/suspendido y empatado en goles.
+   * - Penales enteros ≥ 0 y distintos (debe haber ganador).
+   * - Si ya había penales y el cambio invierte al ganador, no se permite cuando
+   *   con ese resultado ya se generó la ronda o etapa siguiente.
+   * - Si la etapa estaba esperando este dato, continúa sola (siguiente ronda,
+   *   cierre de etapa); si cambia el ganador de la final, se recalcula el podio.
+   */
+  updatePenalties: async (
+    req: FastifyRequest<{
+      Params: { id: string };
+      Body: { localPenalties: number; visitorPenalties: number };
+    }>,
+    reply: FastifyReply,
+  ) => {
+    const { id } = req.params;
+    const { localPenalties, visitorPenalties } = req.body ?? ({} as any);
+
+    const match = await Partidos.findOne({ _id: id, league: req.payload.league });
+    if (!match) {
+      throw new FastifyError("Partido no encontrado", 404);
+    }
+    const championship = await Campeonatos.findOne({
+      _id: match.championship,
+      league: req.payload.league,
+    });
+    const stage = championship?.stages.id(match.stage);
+    if (!championship || !stage) {
+      throw new FastifyError("No se encontró la etapa del partido", 404);
+    }
+    if (stage.mode !== "knockout") {
+      throw new FastifyError(
+        "Solo los partidos de eliminación directa se definen por penales.",
+      );
+    }
+    if (!["finalizado", "suspendido"].includes(match.status)) {
+      throw new FastifyError(
+        "El partido aún no termina: los penales se registran al finalizar la vocalía.",
+      );
+    }
+    if ((match.localGoals ?? 0) !== (match.visitorGoals ?? 0)) {
+      throw new FastifyError(
+        "El partido no terminó empatado: no necesita penales.",
+      );
+    }
+    const valid = (v: unknown) => Number.isInteger(v) && (v as number) >= 0;
+    if (!valid(localPenalties) || !valid(visitorPenalties)) {
+      throw new FastifyError(
+        "Indique los penales de ambos equipos (números enteros desde 0).",
+      );
+    }
+    if (localPenalties === visitorPenalties) {
+      throw new FastifyError("Los penales no pueden terminar empatados.");
+    }
+
+    const hadPenalties =
+      typeof match.localPenalties === "number" &&
+      typeof match.visitorPenalties === "number";
+    const previousLocalWins = hadPenalties
+      ? match.localPenalties! > match.visitorPenalties!
+      : undefined;
+    const localWins = localPenalties > visitorPenalties;
+    const winnerChanges =
+      previousLocalWins !== undefined && previousLocalWins !== localWins;
+
+    if (winnerChanges) {
+      const round = await Rounds.findById(match.round);
+      const [laterRound] = await Promise.all([
+        Rounds.exists({
+          championship: championship._id,
+          stage: stage._id,
+          round: { $gt: round?.round ?? 0 },
+        }),
+      ]);
+      const nextStage = championship.stages.find(
+        (s) => s.order === stage.order + 1,
+      );
+      if (laterRound || (nextStage && nextStage.status !== "pendiente")) {
+        throw new FastifyError(
+          "No se puede cambiar el ganador: con este resultado ya se generó la siguiente ronda o etapa. Elimine primero ese fixture.",
+        );
+      }
+    }
+
+    const before = hadPenalties
+      ? `${match.localPenalties}-${match.visitorPenalties}`
+      : "sin registrar";
+    match.localPenalties = localPenalties;
+    match.visitorPenalties = visitorPenalties;
+    match._movements.push(
+      await getMovimiento({
+        type: "edit",
+        user: req.payload.user,
+        nota: `Penales ${localPenalties}-${visitorPenalties} (antes: ${before})`,
+      }),
+    );
+    await match.save();
+
+    // Los penales ya quedaron guardados: si la etapa aún no puede avanzar
+    // (p. ej. otro partido de la ronda también está empatado sin penales),
+    // se informa como aviso en lugar de error.
+    let warning: string | undefined;
+    try {
+      // Continúa la etapa si estaba esperando este resultado (idempotente)
+      await championship.afterRoundFinished(match.round);
+      // Si el campeonato ya terminó y cambió un ganador, recalcula el podio
+      if (winnerChanges || !hadPenalties) {
+        const fresh = await Campeonatos.findById(championship._id);
+        if (fresh?.status === "finalizado") {
+          await fresh.finishChampionship();
+        }
+      }
+    } catch (error: any) {
+      warning = error?.message;
+    }
+
+    reply.send({ ...match.toObject(), warning });
+  },
 };

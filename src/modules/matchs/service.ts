@@ -8,7 +8,8 @@ MatchSchema.plugin(mongooseSmartQuery, {
   defaultFields: `names league round { name round } stage championship \ 
 localTeam { logo name } visitorTeam { logo name } date status localGoals \
 visitorGoals hour vocal { name } referee { name } assistantReferees { name } \
-observations _movements matchReport`,
+observations _movements matchReport group bracketPosition isThirdPlaceMatch \
+localPenalties visitorPenalties`,
   fieldsForDefaultQuery: "observations date",
   ...msqTemporalOptions,
 });

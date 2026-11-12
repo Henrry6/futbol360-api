@@ -2,7 +2,6 @@ import { ClientSession, Types } from "mongoose";
 import Round from "@/modules/rounds/service";
 import Partidos from "@/modules/matchs/service";
 import { FastifyError } from "@/libs/utils";
-import { MatchDocument } from "@/models/matchs/match";
 import { ChampionshipDocument, ChampionshipStage } from "@/models/champions";
 
 export function shuffle<T>(array: T[]): T[] {
@@ -135,26 +134,49 @@ export function getStageRounds(
     .session(session ?? null);
 }
 
+/** Equipo o jornada que puede venir como id o poblado ({ _id, name }). */
+type Ref = Types.ObjectId | { _id: Types.ObjectId; name?: string };
+
+export interface KnockoutMatch {
+  _id: Types.ObjectId;
+  status: string;
+  localTeam: Ref;
+  visitorTeam: Ref;
+  round?: Ref;
+  localGoals?: number;
+  visitorGoals?: number;
+  localPenalties?: number | null;
+  visitorPenalties?: number | null;
+}
+
+const refId = (ref: Ref): Types.ObjectId =>
+  ref instanceof Types.ObjectId ? ref : ref._id;
+const refName = (ref: Ref | undefined, fallback: string) =>
+  ref && !(ref instanceof Types.ObjectId) && ref.name ? ref.name : fallback;
+
+/**
+ * Descripción legible de un partido para mensajes de error, p. ej.
+ * "España 1 - 1 Juventus (Semifinal)". Para ver nombres, quien llama debe
+ * poblar `localTeam`, `visitorTeam` y `round` con `name` (ver knockout.ts).
+ */
+export function describeMatch(match: KnockoutMatch) {
+  const local = refName(match.localTeam, "Local");
+  const visitor = refName(match.visitorTeam, "Visitante");
+  const round = refName(match.round, "");
+  return `${local} ${match.localGoals ?? 0} - ${match.visitorGoals ?? 0} ${visitor}${round ? ` (${round})` : ""}`;
+}
+
 /**
  * Ganador y perdedor de un partido de eliminación directa.
  * Gana quien hizo más goles; si empatan, decide la tanda de penales.
  * Lanza error si el partido no terminó o terminó empatado sin penales.
+ * Devuelve siempre ids (aunque los equipos vengan poblados).
  */
-export function getKnockoutResult(
-  match: Pick<
-    MatchDocument,
-    | "_id"
-    | "status"
-    | "localTeam"
-    | "visitorTeam"
-    | "localGoals"
-    | "visitorGoals"
-    | "localPenalties"
-    | "visitorPenalties"
-  >,
-) {
+export function getKnockoutResult(match: KnockoutMatch) {
   if (!["finalizado", "suspendido"].includes(match.status)) {
-    throw new FastifyError(`El partido ${match._id} aún no ha terminado.`);
+    throw new FastifyError(
+      `El partido ${describeMatch(match)} aún no ha terminado.`,
+    );
   }
   const local = match.localGoals ?? 0;
   const visitor = match.visitorGoals ?? 0;
@@ -166,12 +188,16 @@ export function getKnockoutResult(
     const vp = match.visitorPenalties;
     if (lp === undefined || vp === undefined || lp === null || vp === null || lp === vp) {
       throw new FastifyError(
-        `El partido ${match._id} terminó empatado y no tiene un ganador por penales.`,
+        `El partido ${describeMatch(match)} terminó empatado y no tiene un ganador por penales. ` +
+          `Registre los penales del partido (localPenalties / visitorPenalties) y vuelva a intentarlo. ` +
+          `[id ${match._id}]`,
       );
     }
     localWins = lp > vp;
   }
+  const localTeam = refId(match.localTeam);
+  const visitorTeam = refId(match.visitorTeam);
   return localWins
-    ? { winner: match.localTeam, loser: match.visitorTeam }
-    : { winner: match.visitorTeam, loser: match.localTeam };
+    ? { winner: localTeam, loser: visitorTeam }
+    : { winner: visitorTeam, loser: localTeam };
 }

@@ -15,7 +15,7 @@
 // Empates: si un partido termina empatado se define por penales
 // (`localPenalties` / `visitorPenalties`, se envían al finalizar la vocalía).
 
-import { ClientSession } from "mongoose";
+import { ClientSession, Types } from "mongoose";
 import { FastifyError } from "@/libs/utils";
 import Partidos from "@/modules/matchs/service";
 import { ChampionshipDocument, ChampionshipStage } from "@/models/champions";
@@ -48,7 +48,8 @@ export function validate(stage: ChampionshipStage, participants: Seed[]) {
       `La etapa requiere ${stage.participants} equipos y hay ${participants.length} disponibles.`,
     );
   }
-  if (stage.qualifyTeams) {
+  // qualifyTeams 1 (o vacío) = se juega hasta la final y sale un campeón
+  if (stage.qualifyTeams && stage.qualifyTeams > 1) {
     if (
       !isPowerOfTwo(stage.qualifyTeams) ||
       stage.qualifyTeams >= stage.participants
@@ -93,11 +94,24 @@ export async function generateFixture(
   );
 }
 
-/** Partidos de llave (sin el de tercer lugar) de una ronda, en orden. */
-function getBracketMatches(roundId: unknown, session?: ClientSession) {
-  return Partidos.find({ round: roundId, isThirdPlaceMatch: { $ne: true } })
-    .sort({ bracketPosition: 1 })
-    .session(session ?? null);
+/**
+ * Partidos de una ronda en orden de llave, con nombres de equipos y de la
+ * jornada poblados para que los errores digan "España 1 - 1 Juventus (Final)".
+ */
+function getRoundMatches(
+  roundId: unknown,
+  { includeThirdPlace = false, session }: { includeThirdPlace?: boolean; session?: ClientSession } = {},
+) {
+  return Partidos.find({
+    round: roundId,
+    ...(includeThirdPlace ? {} : { isThirdPlaceMatch: { $ne: true } }),
+  })
+    .sort({ bracketPosition: 1, _id: 1 })
+    .populate<{ localTeam: { _id: Types.ObjectId; name: string } }>("localTeam", "name")
+    .populate<{ visitorTeam: { _id: Types.ObjectId; name: string } }>("visitorTeam", "name")
+    .populate<{ round: { _id: Types.ObjectId; name: string } }>("round", "name")
+    .session(session ?? null)
+    .lean();
 }
 
 /**
@@ -115,7 +129,7 @@ export async function nextRound(
   const last = rounds.at(-1);
   if (!last || last.status !== "finalizado") return false;
 
-  const matches = await getBracketMatches(last._id, session);
+  const matches = await getRoundMatches(last._id, { session });
   const results = matches.map(getKnockoutResult);
   const winners = results.map((r) => r.winner);
 
@@ -158,7 +172,7 @@ export async function getQualifiers(
 ): Promise<Qualifiers> {
   const rounds = await getStageRounds(championship, stage);
   const last = rounds.at(-1);
-  const matches = last ? await getBracketMatches(last._id) : [];
+  const matches = last ? await getRoundMatches(last._id) : [];
   const winners = matches.map((m) => getKnockoutResult(m).winner);
   if (winners.length !== stage.qualifyTeams) {
     throw new FastifyError(
@@ -181,8 +195,8 @@ export async function getPodium(
   const last = rounds.at(-1);
   if (!last) return {};
 
-  const lastMatches = await Partidos.find({ round: last._id }).sort({
-    bracketPosition: 1,
+  const lastMatches = await getRoundMatches(last._id, {
+    includeThirdPlace: true,
   });
   const final = lastMatches.filter((m) => !m.isThirdPlaceMatch);
   if (final.length !== 1) return {};

@@ -579,6 +579,76 @@ async function runValidationScenario() {
   out(` ✓ validaciones probadas`);
 }
 
+// ───────────────────────── corrección de penales ─────────────────────────
+/** Juega un partido con un marcador fijo (y penales opcionales). */
+async function playFixedMatch(championshipId: string, stageId: string, match: PlayedMatch & { round: any }, lg: number, vg: number, penalties?: [number, number]) {
+  const roundId = String(match.round?._id ?? match.round);
+  const vocalia = await call("POST", `/matchs/${match._id}/start`);
+  const scorers = [...Array(lg).fill(match.localTeam), ...Array(vg).fill(match.visitorTeam)];
+  for (const team of scorers) {
+    await call("POST", "/matchs-events", { vocalia: vocalia._id, match: match._id, championship: championshipId, stage: stageId, round: roundId, team, minute: 10, type: "gol" });
+  }
+  await call("POST", `/matchs-reports/${vocalia._id}/finalizar`, {
+    status: "finalizado",
+    ...(penalties ? { localPenalties: penalties[0], visitorPenalties: penalties[1] } : {}),
+  });
+}
+
+async function runPenaltiesCorrectionScenario() {
+  out("\n═══ Corrección de penales (PUT /matchs/:id/penalties) ═══");
+  const failuresBefore = failures.length;
+  const teams = await createTeams(4);
+  const c = await call("POST", "/championships", { name: "Corrección penales", category: categoryId, season: new Date().toISOString(), teams: teams.map((team) => ({ team })) });
+  await call("POST", `/championships/${c._id}/stages`, { name: "Copa", mode: "knockout", participants: 4 });
+  const [stage] = await call("GET", `/championships/${c._id}/stages`);
+  await call("POST", `/championships/${c._id}/generate-fixture/${stage._id}`);
+  const penalties = (id: string, lp: number, vp: number) => call("PUT", `/matchs/${id}/penalties`, { localPenalties: lp, visitorPenalties: vp });
+
+  // Semifinales: la 1 empatada (gana local 5-4), la 2 sin empate
+  const [semis] = await getRounds(c._id, stage._id);
+  const [s1, s2] = (await getMatches(semis._id)).sort((a, b) => (a.bracketPosition ?? 0) - (b.bracketPosition ?? 0));
+  await playFixedMatch(c._id, stage._id, { ...s1, round: semis._id }, 1, 1, [5, 4]);
+  await playFixedMatch(c._id, stage._id, { ...s2, round: semis._id }, 2, 0);
+
+  await expectError("penales en partido sin empate", () => penalties(s2._id, 4, 3), "no terminó empatado");
+  await expectError("penales empatados", () => penalties(s1._id, 4, 4), "no pueden terminar empatados");
+  await penalties(s1._id, 6, 4); // mismo ganador: permitido
+  const s1After = (await getMatches(semis._id)).find((m) => m._id === s1._id)!;
+  check(s1After.localPenalties === 6 && s1After.visitorPenalties === 4, "no se guardó la corrección 6-4");
+  await expectError("invertir ganador con la final ya generada", () => penalties(s1._id, 3, 4), "siguiente ronda");
+
+  // Final empatada, luego se borran sus penales (como un partido viejo)
+  const rounds = await getRounds(c._id, stage._id);
+  const finalRound = rounds.find((r) => r.round === 2)!;
+  const [final] = await getMatches(finalRound._id);
+  await playFixedMatch(c._id, stage._id, { ...final, round: finalRound._id }, 0, 0, [4, 2]);
+  let champ = await call("GET", `/championships/${c._id}`);
+  check(String(champ.champion) === final.localTeam, "el campeón no es el ganador de la final por penales");
+  await mongoose.connection.collection("matches").updateOne(
+    { _id: new mongoose.Types.ObjectId(final._id) },
+    { $unset: { localPenalties: "", visitorPenalties: "" } },
+  );
+  // Registrar penales al "partido viejo" con el otro ganador: recalcula el podio
+  await penalties(final._id, 3, 5);
+  champ = await call("GET", `/championships/${c._id}`);
+  check(String(champ.champion) === final.visitorTeam && String(champ.runnerUp) === final.localTeam, "no se recalculó el podio tras corregir penales de la final");
+  log(`   Campeón tras corrección: ${name(champ.champion)} · Subcampeón: ${name(champ.runnerUp)}`);
+
+  // Liga: no se aceptan penales
+  const leagueTeams = await createTeams(2);
+  const l = await call("POST", "/championships", { name: "Liga corta", category: categoryId, season: new Date().toISOString(), teams: leagueTeams.map((team) => ({ team })) });
+  await call("POST", `/championships/${l._id}/stages`, { name: "Liga", mode: "round_robin", participants: 2 });
+  const [ls] = await call("GET", `/championships/${l._id}/stages`);
+  await call("POST", `/championships/${l._id}/generate-fixture/${ls._id}`);
+  const [lr] = await getRounds(l._id, ls._id);
+  const [lm] = await getMatches(lr._id);
+  await playFixedMatch(l._id, ls._id, { ...lm, round: lr._id }, 1, 1);
+  await expectError("penales en liga", () => penalties(lm._id, 4, 3), "eliminación directa");
+
+  const ok = failures.length === failuresBefore;
+  out(` ${ok ? "✓" : "✗"} corrección de penales: ${ok ? "todas las verificaciones OK" : `${failures.length - failuresBefore} fallas`}`);
+}
+
 // ───────────────────────── main ─────────────────────────
 const scenarios: Scenario[] = [
   {
@@ -625,7 +695,7 @@ const scenarios: Scenario[] = [
     teams: 8,
     stages: [
       { name: "Cuartos", mode: "knockout", participants: 8, qualifyTeams: 4 },
-      { name: "Final four", mode: "knockout", participants: 4, thirdPlaceMatch: true },
+      { name: "Final four", mode: "knockout", participants: 4, qualifyTeams: 1, thirdPlaceMatch: true },
     ],
   },
 ];
@@ -636,6 +706,7 @@ async function main() {
   try {
     for (const scenario of scenarios) await runScenario(scenario);
     await runValidationScenario();
+    await runPenaltiesCorrectionScenario();
   } finally {
     await app?.close();
     await mongoose.connection.dropDatabase();

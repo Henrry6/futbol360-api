@@ -18,6 +18,8 @@ Que los usuarios de una liga vean la tabla de posiciones de una etapa de un camp
 - Orden: puntos → diferencia de goles → goles a favor → partidos ganados → id del equipo.
 - Sin `stageId`, usa la primera etapa en `en_juego` o `finalizada`.
 - Etapa `knockout` → error "La etapa no tiene tabla de posiciones."
+- Etapa `groups` → cada fila trae `group`; se ordena por grupo y `position` es la posición dentro del
+  grupo. La app muestra una tabla por grupo (2026-11-12).
 
 ## Cambios en la API
 | Método | Ruta | Auth | Body / Query | Respuesta |

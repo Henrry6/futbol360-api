@@ -159,6 +159,14 @@ interface RouterOptions {
   camposEdicionDirecta?: string[];
 }
 
+/**
+ * Body genérico para documentar POST/PUT en Swagger (/docs) cuando la ruta no
+ * define su propio esquema: acepta cualquier objeto, no restringe campos.
+ */
+const ANY_OBJECT_BODY: FastifySchema = {
+  body: { type: "object", additionalProperties: true },
+};
+
 export default async function UpRouter(
   instance: FastifyInstance,
   options: RouterOptions,
@@ -217,7 +225,7 @@ export default async function UpRouter(
   // crear
   if (!options.exclude?.includes("postOne")) {
     instance.post<UpRequest>("", {
-      schema: options.schema?.post,
+      schema: options.schema?.post ?? ANY_OBJECT_BODY,
       handler:
         options.controllers?.post ||
         (async (request, reply) => {
@@ -271,7 +279,7 @@ export default async function UpRouter(
   // editar uno
   if (!options.exclude?.includes("putOne")) {
     instance.put<UpRequest>("/:id", {
-      schema: options.schema?.putOne,
+      schema: options.schema?.putOne ?? ANY_OBJECT_BODY,
       handler:
         options.controllers?.putOne ||
         (async (request, reply) => {
