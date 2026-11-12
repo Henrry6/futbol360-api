@@ -118,6 +118,7 @@ Todas (excepto User y League) tienen `league` (ref, requerido) y todas tienen `_
 - Formato de error general: `{ success: false, message, code }` (status del `FastifyError`, 500 si no tiene).
 - Formato de lista (UpRouter): `{ page, total, data: T[] }`.
   Query: `page`, `limit` (por defecto 20), `sort` (ej. `-date`), `fields`, `q` (búsqueda), y cualquier campo como filtro (ej. `?championship=<id>&status=programado`).
+  Operadores en filtros (mongoose-smart-query, usados por la app): `campo={$in}a,b`, `date={$gte}<iso>{$lte}<iso>`; `$getAllFields=true` devuelve todos los campos.
 - `GET /:id` devuelve el documento (404 si no existe en la liga). `DELETE /:id` devuelve el texto `"success"`.
 - `GET /<recurso>/get-options` devuelve opciones de enums si el modelo las define (hoy `{}`).
 
@@ -166,13 +167,42 @@ Todas (excepto User y League) tienen `league` (ref, requerido) y todas tienen `_
 | POST | /matchs-reports/:id/finalizar | JWT | `{ status: "finalizado" \| "suspendido" }` | `"Vocalia finalizada"` |
 
 ## 6. Pantallas de la app
-> Se completa al revisar `futbol360-app`.
+Revisado en `futbol360-app` el 2026-11-12. Todas requieren JWT salvo el login.
 
+**Login — `app/(login)`**
 | Ruta | Descripción | Datos que usa |
 |---|---|---|
-| TODO | | |
+| / | Redirige a /login | — |
+| /login | Login de usuarios de liga (código de liga + usuario + contraseña) → /dashboard | POST /auth/login |
+| /admin/login | Login del master → /users | POST /auth/admin/login |
+
+**Administración (master/admin) — `app/(admin)`**
+| Ruta | Descripción | Datos que usa |
+|---|---|---|
+| /home | Inicio admin | GET /dashboard/admin/statics (**no existe en la API**), GET /leagues |
+| /leagues | Listado y gestión de ligas | GET/POST/PUT /leagues |
+| /users | Usuarios (master) | GET/POST/PUT/DELETE /users, GET /leagues |
+
+**Liga — `app/(usuarios)`**
+| Ruta | Descripción | Datos que usa |
+|---|---|---|
+| /dashboard | Conteos de la liga | GET /dashboard |
+| /categories | CRUD de categorías (modal) | /categories |
+| /teams, /teams/insert, /teams/[id]/edit | Equipos, logo, plantilla por posición | /teams, /teams/:id/image, /teams/:id/groups |
+| /players, /players/insert, /players/[id]/edit | Jugadores y foto | /players, /players/:id/image, /teams (select) |
+| /campeonatos, /campeonatos/insert, /campeonatos/[id]/edit | Campeonatos, categoría y equipos inscritos | /championships, /categories, /teams |
+| /campeonatos/[id]/gestionar | Etapas, generar/borrar fixture, jornadas, programar partidos (fecha, vocal, árbitros), iniciar/revertir partido, tabla de posiciones | /championships/:id, /championships/:id/stages, generate-fixture, delete-fixture, /rounds, /matchs, PUT /matchs/:id, /matchs/:id/start, revert-start, /users (oficiales), table-positions |
+| /campeonatos/[id]/vocalia/[vocaliaId] | Vocalía en vivo: cronómetro, eventos, alineaciones, capitanes, informes, recaudación, finalizar | /matchs-reports/:id (GET/PUT), /matchs-reports/:id/finalizar, /matchs/:id, /matchs-events (CRUD), /players |
+| /matchs | "Mis partidos" del oficial (filtra `vocal = usuario`) e inicio de vocalía | GET /matchs, /matchs/:id/start, revert-start |
+| /history | Historial de partidos finalizados/suspendidos como árbitro, asistente o vocal, por rango de fechas | GET /matchs |
+| /usuarios | Usuarios de la liga (admin) | /users |
+
+**Enlaces de menú sin página todavía:** `/referees`, `/vocals`, `/statistics` (directivo y player), `/team` (player).
 
 ## 7. Requisitos no funcionales
+- Responsive: layout con `Drawer` en móvil (antd `useBreakpoint`, corte en `lg`)
+- Node ≥ 20 para la app (Next 16)
+- [CONFIRMAR] moneda y formato: la app formatea con `es-MX` / `MXN` (`app/assets/utils.tsx`)
 - Imágenes ≤ 5 MB (límite de multipart). [CONFIRMAR] formatos permitidos: jpg/png/webp (hoy no se valida el tipo)
 - Imágenes servidas desde Cloudinary, carpeta `futbol360/teams` y `futbol360/players`
 - MongoDB en replica set (transacciones en fixture y sesiones)
@@ -184,7 +214,9 @@ Todas (excepto User y League) tienen `league` (ref, requerido) y todas tienen `_
 - [CONFIRMAR] pagos, apuestas, streaming
 
 ## 9. Decisiones tomadas
-- 2026-11-12 — `SPEC.md` y `specs/` viven en `futbol360-api` y son la fuente única de contexto para API y app.
+- 2026-11-12 — `SPEC.md` y `specs/` viven en `futbol360-api` y son la fuente única de contexto para API y app. La app los referencia como `../futbol360-api/` (ambos repos son carpetas hermanas).
+- (Inferida del código) App 100% cliente con antd + zustand; protección de rutas en layouts, sin middleware.
+- (Inferida del código) Imágenes en la app con `cloudinaryUrl()` + `Avatar` de antd, no `next/image`.
 - (Inferida del código) Multi-liga por `league` en cada documento, aislado vía JWT.
 - (Inferida del código) Imágenes: se guarda el `publicId` de Cloudinary y la URL se construye al leer.
 - (Inferida del código) Auditoría con `_movements` en lugar de timestamps en la mayoría de modelos.
@@ -204,3 +236,10 @@ Cada punto debería convertirse en su propia spec antes de arreglarse.
 10. Subida de imágenes no valida el tipo de archivo.
 11. `auth.service.ts` (`login`) no se usa.
 12. El token de `/auth/admin/login` no lleva `league`; las rutas que filtran por liga (incluida `/users/me`) no están pensadas para ese token.
+
+**App ↔ API**
+13. La app llama `GET /dashboard/admin/statics` (`app/(admin)/home/page.tsx`), que no existe en la API.
+14. El layout `(admin)` redirige si `!isAdmin`, e `isAdmin` solo es true con el rol `admin`: un usuario solo `master` sería expulsado de `/users`. [VERIFICAR]
+15. El menú tiene rutas sin página (`/referees`, `/vocals`, `/statistics`, `/team`).
+16. `NEXT_PUBLIC_API_URL` hace que axios llame directo a la API desde el navegador, sin usar el rewrite `/api`.
+17. Duplicados en la app: `assets/filtros.tsx` ≈ `assets/utils.tsx`; `Movement` en `types/global.ts` y `types/utils.ts`.

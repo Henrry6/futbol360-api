@@ -1,6 +1,6 @@
 # 001 — Tabla de posiciones de un campeonato
 
-**Estado:** API hecha · app por verificar
+**Estado:** hecha (API y app)
 **Repos afectados:** ambos
 
 > Spec de referencia: documenta una funcionalidad que ya existe en la API,
@@ -28,9 +28,9 @@ Código: `src/modules/championships/championship.controller.ts` (`tablePositions
 `competicion/standings.ts`, `competicion/rankings.ts`.
 
 ## Cambios en la app
-- Pantalla de tabla dentro del detalle del campeonato, con selector de etapa
-  (`GET /championships/:id/stages`, excluir `knockout`).
-- `logo` es un publicId de Cloudinary: mostrar con `next/image`.
+- Componente `app/components/campeonato/TablaPosiciones.tsx` (SWR, clave
+  `table-positions:<championshipId>:<stageId|all>`), usado en `/campeonatos/[id]/gestionar`.
+- `logo` es un publicId de Cloudinary: mostrar con `cloudinaryUrl()`.
 
 ## Criterios de aceptación
 - [x] Etapa sin partidos jugados → todos los equipos con 0
