@@ -22,6 +22,14 @@ export async function buildApp() {
   await app.register(jwtPlugin);
   await app.register(mailerPlugin);
   app.setErrorHandler((error: any, request, reply) => {
+    // Errores de validación de Mongoose (requeridos, únicos, enums…): son
+    // errores del dato enviado → 400 con solo los mensajes legibles.
+    if (error.name === "ValidationError" && error.errors) {
+      error.statusCode = 400;
+      error.message = Object.values(error.errors)
+        .map((e: any) => e.message)
+        .join(" ");
+    }
     const statusCode = error.statusCode ?? 500;
     const ignoredRoutes = ["/xxx", "/transactional-annex"];
     const shouldIgnore = ignoredRoutes.some((route) =>

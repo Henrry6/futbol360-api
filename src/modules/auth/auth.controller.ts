@@ -32,10 +32,12 @@ export const authUser = {
         404,
       );
     }
-    if (!user.roles.includes("master")) {
+    const esAdmin = user.roles.some((r) => r === "master" || r === "admin");
+
+    if (!esAdmin) {
       throw new FastifyError(
         `El usuario ${req.body.username} no es administrador`,
-        404,
+        403,
       );
     }
     const isValid = await comparePassword(req.body.password, user.password);

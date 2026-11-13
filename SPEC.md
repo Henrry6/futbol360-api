@@ -29,6 +29,21 @@ a varias ligas (`leagues[]`).
 > Restricciones por rol hoy: `/leagues` (`master`, `admin`) y `PUT /matchs/:id/penalties`
 > (`admin`, `directivo`). El resto de rutas solo exige JWT de la liga.
 
+**Alcance de usuarios y ligas** (`users.scope.ts`), aplicado a listar, ver, editar y eliminar:
+
+| Sesión | Usuarios que ve/administra | Ligas que ve/edita |
+|---|---|---|
+| Liga (`/auth/login`, cualquier rol, incluso master/admin) | los de esa liga | solo esa |
+| Área admin (`/auth/admin/login`) con `master` | todos | todas |
+| Área admin con `admin` | los de cualquiera de sus ligas | solo las suyas |
+
+- Al crear/editar un usuario solo se pueden agregar o quitar ligas que se administran; las demás ligas
+  que el usuario ya tenía se conservan. Asignar una liga ajena → 403.
+- Solo un `master` puede crear usuarios `master` o dar ese rol. Nadie puede eliminarse a sí mismo.
+- Un usuario `master` solo puede ser editado por él mismo: un admin (u otro master) puede verlo pero
+  `PUT`/`DELETE /users/:id` responden 403. La app muestra esa fila como «Solo lectura».
+- `DELETE /leagues/:id` está deshabilitado (dejaría equipos, campeonatos y usuarios huérfanos).
+
 ## 3. Entidades del dominio
 Todas (excepto User y League) tienen `league` (ref, requerido) y todas tienen `_movements`
 (historial de auditoría `{ type, date, user, nota }`).
@@ -170,8 +185,8 @@ en grupos de distinto tamaño unos equipos juegan más partidos.
 
 | Prefijo | Recurso | Notas |
 |---|---|---|
-| /leagues | League | Solo `master`/`admin` |
-| /users | User | POST y PUT propios (hash de contraseña, correo de bienvenida) |
+| /leagues | League | Solo `master`/`admin`; listado, detalle y edición según el alcance (§2); sin DELETE |
+| /users | User | Todas las operaciones según el alcance (§2); POST y PUT propios (hash de contraseña, correo de bienvenida) |
 | /categories | Category | |
 | /teams | Team | |
 | /players | Player | |
@@ -279,6 +294,5 @@ Cada punto debería convertirse en su propia spec antes de arreglarse. Los núme
 
 **App ↔ API**
 - **13.** La app llama `GET /dashboard/admin/statics` (`app/(admin)/home/page.tsx`), que no existe en la API.
-- **14.** El layout `(admin)` redirige si `!isAdmin`, e `isAdmin` solo es true con el rol `admin`: un usuario solo `master` sería expulsado de `/users`. [VERIFICAR]
 - **15.** El menú tiene rutas sin página (`/referees`, `/vocals`, `/statistics`, `/team`).
 - **17.** Duplicados en la app: `assets/filtros.tsx` ≈ `assets/utils.tsx`; `Movement` en `types/global.ts` y `types/utils.ts`.

@@ -18,13 +18,14 @@ LeagueSchema.statics.createDocument = async function (body, args = {}) {
   const liga = new this(body);
   liga._movements = [creador];
   const usuario = await Users.findById(args.user);
-  if (usuario) {
-    usuario?.leagues.push(liga._id);
-    usuario?.save();
-  } else {
+  if (!usuario) {
     throw new FastifyError("La liga no puede ser asignada a un usuario");
   }
+  // Primero se guarda la liga (valida código y nombre únicos); solo si se creó
+  // se asocia al usuario, para no dejar ligas inexistentes en `user.leagues`.
   await liga.save();
+  usuario.leagues.push(liga._id);
+  await usuario.save();
   return liga;
 } as LigaModel["createDocument"];
 
